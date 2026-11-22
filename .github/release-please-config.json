@@ -1,0 +1,14 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "go",
+      "package-name": "filekind",
+      "include-v-in-tag": true,
+      "include-component-in-tag": false,
+      "extra-files": ["python/pyproject.toml"]
+    }
+  },
+  "bump-minor-pre-major": true,
+  "bump-patch-for-minor-pre-major": false,
+  "pull-request-title-pattern": "chore: release ${version}"
+}

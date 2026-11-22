@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "filekind"
+version = "0.0.0" # x-release-please-version
+description = "Identity header, kinds registry and canonical row digest for the single-file SQLite format, over the standard library's sqlite3."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+# orbitra is the ternary codec package, installed from its own checkout; the
+# version floor keeps pip from taking an unrelated distribution of that name.
+base3 = ["orbitra>=0.1.0"]
+fast = ["blake3>=0.4"]
+
+[tool.setuptools]
+packages = ["filekind"]
+
+[tool.setuptools.package-data]
+filekind = ["kinds.tsv"]

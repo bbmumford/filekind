@@ -1,0 +1,28 @@
+kind	name	lane	generation	encrypted	values	use
+01	orbtrdSystemStore	execution-platform	1	yes	sql	the device daemon's system store
+02	accountStore	execution-platform	1	yes	sql	the device daemon's per-account store
+03	lad	packages	1	yes	sql	a mesh node's local address directory file
+04	tursoraftLocal	packages	1	yes	sql	a database file one process owns, opened through tursoraft's local store
+05	scopeReplica	packages	1	yes	sql	an embedded replica of one scope database
+06	devicePolicyStore	execution-platform	1	no	sql	the verified policy bundle segments and overlays a device admits against, each overlay constrained to its base
+10	auditSegment	sqlite-artifacts	1	no	sql	a sealed audit segment: audit_log rows with their triggers, the checkpoint, manifest, redaction ruleset and signatures
+11	auditExport	sqlite-artifacts	1	no	sql	a signed audit export bundle over the same audit_log rows, with the export's fields
+20	runLedger	programme-ledger, shared with DM-corpus	2	no	radix	one ledger shared by both governors: governed jobs and their run records (pins, head moves, readings, verdicts, lock waits, launches), each row naming the radix of its numbers
+21	encodedIds	continuous-field	1	no	base3	a training corpus's encoded-ids kept file, held as the database itself
+22	runEvents	continuous-field	1	no	base3	one event store per training run, written by one writer
+23	runRecords	continuous-field	1	no	base3	a training run's own records, when they are kept apart from the run ledger
+24	lineage	continuous-field	1	no	base3	the lineage of models and checkpoints: each named id and the ids it descends from
+25	memoryBank	continuous-field	1	no	base3	a memory bank's held entries
+26	continuityStore	continuous-field	1	no	base3	a continuity store's held state
+27	conversionArtifact	ternary-transformer	1	no	base3	a conversion artifact as one file: its ternary records by name, the account and summary as rows, its resumable checkpoint as a transaction
+28	efferentGateRecord	cf-designer	1	no	base3	the efferent gate's append-only record of every pattern it admits or refuses, one writer per session
+29	teacherFieldRecord	ternary-transformer	1	no	base3	a teacher's field record: the field converter's stage records
+40	removalLedger	lead	1	no	base3	one ledger of the files every lane has set aside for removal, with each one's manifest entry
+41	decisionIndex	programme-ledger	2	no	sql	a derived index over both decisions folders and the checkpoint seal catalogue; the sources stay the authority and a test re-derives the rows
+42	guardIndex	guard-speed	1	no	sql	a derived index of the source tree that the guard suites query instead of walking it
+43	pluginContributions	execution-platform	1	no	sql	the plugin catalogue's contributions as rows derived beside the signed manifest
+44	docsSearchIndex	sqlite-artifacts	1	no	sql	the read-only search index the documentation site serves
+45	implementationLedger	DM-corpus	1	no	base3	the findings ledger: its rows are the authority, its page is generated from them, each edit a transaction recorded in a history table
+50	billingWitness	packages	1	no	sql	the billing witness journals
+51	uploaderLedger	platform-engineer	1	no	sql	the device uploader's ledger of files queued, sent and acknowledged
+ff	fixture	packages	1	no	sql	the specification's golden vectors and the helpers' own tests; no production reader expects it
