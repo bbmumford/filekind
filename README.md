@@ -103,7 +103,8 @@ Releases are cut by release-please from conventional commit messages
 
 ## Used by
 
-No package in the ORBTR estate imports it yet.
+`github.com/bbmumford/policypool`, whose identity option checks and stamps a pool's
+database file through it.
 
 ## Platforms and build
 

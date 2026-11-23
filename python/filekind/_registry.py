@@ -13,7 +13,7 @@ from importlib import resources
 from ._errors import InvalidArgument
 
 PREFIX = 0x4F524200
-HEADER = "kind\tname\tlane\tgeneration\tencrypted\tvalues\tuse"
+HEADER = "kind\tname\tsystem\tgeneration\tencrypted\tvalues\tuse"
 VALUES = ("sql", "base3", "radix")
 
 
@@ -21,7 +21,7 @@ VALUES = ("sql", "base3", "radix")
 class Entry:
     kind: int
     name: str
-    lane: str
+    system: str
     generation: int
     encrypted: bool
     values: str
@@ -44,7 +44,7 @@ def parse(text: str) -> tuple[Entry, ...]:
         cols = line.split("\t")
         if len(cols) != 7:
             raise InvalidArgument(f"kinds.tsv row {row} has {len(cols)} columns, want 7")
-        k, name, lane, generation, encrypted, values, use = cols
+        k, name, system, generation, encrypted, values, use = cols
         if len(k) != 2 or k.lower() != k or any(c not in "0123456789abcdef" for c in k):
             raise InvalidArgument(f"kinds.tsv row {row} kind {k!r} is not two lower-case hex digits")
         byte = int(k, 16)
@@ -62,9 +62,9 @@ def parse(text: str) -> tuple[Entry, ...]:
             raise InvalidArgument(f"kinds.tsv row {row} encrypted {encrypted!r} is not yes or no")
         if values not in VALUES:
             raise InvalidArgument(f"kinds.tsv row {row} values {values!r} is not sql, base3 or radix")
-        if not lane or not use:
-            raise InvalidArgument(f"kinds.tsv row {row} has an empty lane or use")
-        entries.append(Entry(byte, name, lane, int(generation), encrypted == "yes", values, use))
+        if not system or not use:
+            raise InvalidArgument(f"kinds.tsv row {row} has an empty system or use")
+        entries.append(Entry(byte, name, system, int(generation), encrypted == "yes", values, use))
     return tuple(entries)
 
 

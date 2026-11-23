@@ -66,22 +66,22 @@ func TestPythonCopyMatchesTheRegistry(t *testing.T) {
 }
 
 func TestParseRegistryRefuses(t *testing.T) {
-	header := "kind\tname\tlane\tgeneration\tencrypted\tvalues\tuse\n"
+	header := "kind\tname\tsystem\tgeneration\tencrypted\tvalues\tuse\n"
 	row := func(cols ...string) string { return strings.Join(cols, "\t") + "\n" }
-	good := row("01", "a", "lane", "1", "no", "sql", "use")
+	good := row("01", "a", "system", "1", "no", "sql", "use")
 	cases := map[string]string{
 		"header":       "kind\tname\n" + good,
-		"columns":      header + "01\ta\tlane\t1\tno\tsql\n",
-		"upper hex":    header + row("0A", "a", "lane", "1", "no", "sql", "use"),
-		"zero byte":    header + row("00", "a", "lane", "1", "no", "sql", "use"),
-		"not hex":      header + row("zz", "a", "lane", "1", "no", "sql", "use"),
-		"descending":   header + row("02", "a", "lane", "1", "no", "sql", "use") + row("01", "b", "lane", "1", "no", "sql", "use"),
-		"repeat byte":  header + good + row("01", "b", "lane", "1", "no", "sql", "use"),
-		"repeat name":  header + good + row("02", "a", "lane", "1", "no", "sql", "use"),
-		"generation 0": header + row("01", "a", "lane", "0", "no", "sql", "use"),
-		"encrypted":    header + row("01", "a", "lane", "1", "maybe", "sql", "use"),
-		"values":       header + row("01", "a", "lane", "1", "no", "decimal", "use"),
-		"empty lane":   header + row("01", "a", "", "1", "no", "sql", "use"),
+		"columns":      header + "01\ta\tsystem\t1\tno\tsql\n",
+		"upper hex":    header + row("0A", "a", "system", "1", "no", "sql", "use"),
+		"zero byte":    header + row("00", "a", "system", "1", "no", "sql", "use"),
+		"not hex":      header + row("zz", "a", "system", "1", "no", "sql", "use"),
+		"descending":   header + row("02", "a", "system", "1", "no", "sql", "use") + row("01", "b", "system", "1", "no", "sql", "use"),
+		"repeat byte":  header + good + row("01", "b", "system", "1", "no", "sql", "use"),
+		"repeat name":  header + good + row("02", "a", "system", "1", "no", "sql", "use"),
+		"generation 0": header + row("01", "a", "system", "0", "no", "sql", "use"),
+		"encrypted":    header + row("01", "a", "system", "1", "maybe", "sql", "use"),
+		"values":       header + row("01", "a", "system", "1", "no", "decimal", "use"),
+		"empty system": header + row("01", "a", "", "1", "no", "sql", "use"),
 	}
 	for name, text := range cases {
 		if _, err := parseRegistry(text); err == nil {

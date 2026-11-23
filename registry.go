@@ -105,7 +105,7 @@ func (v Values) String() string {
 type Entry struct {
 	Kind       Kind
 	Name       string
-	Lane       string
+	System     string
 	Generation int32
 	Encrypted  bool
 	Values     Values
@@ -126,7 +126,7 @@ var (
 // unique, bytes ascend, and 0x00 is never a kind.
 func parseRegistry(text string) ([]Entry, error) {
 	lines := strings.Split(strings.TrimSuffix(text, "\n"), "\n")
-	const header = "kind\tname\tlane\tgeneration\tencrypted\tvalues\tuse"
+	const header = "kind\tname\tsystem\tgeneration\tencrypted\tvalues\tuse"
 	if len(lines) == 0 || lines[0] != header {
 		return nil, fmt.Errorf("filekind: kinds.tsv header is not %q", header)
 	}
@@ -178,10 +178,10 @@ func parseRegistry(text string) ([]Entry, error) {
 			return nil, fmt.Errorf("filekind: kinds.tsv row %d values %q is not sql, base3 or radix", row, cols[5])
 		}
 		if cols[2] == "" || cols[6] == "" {
-			return nil, fmt.Errorf("filekind: kinds.tsv row %d has an empty lane or use", row)
+			return nil, fmt.Errorf("filekind: kinds.tsv row %d has an empty system or use", row)
 		}
 		entries = append(entries, Entry{
-			Kind: Kind(b), Name: cols[1], Lane: cols[2], Generation: int32(gen),
+			Kind: Kind(b), Name: cols[1], System: cols[2], Generation: int32(gen),
 			Encrypted: encrypted, Values: values, Use: cols[6],
 		})
 	}

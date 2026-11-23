@@ -35,10 +35,10 @@ class Registry(unittest.TestCase):
             self.assertIsNone(filekind.kind_of(app))
 
     def test_refuses_a_malformed_registry(self):
-        header = "kind\tname\tlane\tgeneration\tencrypted\tvalues\tuse\n"
-        good = "01\ta\tlane\t1\tno\tsql\tuse\n"
-        for text in ("kind\tname\n" + good, header + "0A\ta\tlane\t1\tno\tsql\tuse\n",
-                     header + "00\ta\tlane\t1\tno\tsql\tuse\n",
+        header = "kind\tname\tsystem\tgeneration\tencrypted\tvalues\tuse\n"
+        good = "01\ta\tsystem\t1\tno\tsql\tuse\n"
+        for text in ("kind\tname\n" + good, header + "0A\ta\tsystem\t1\tno\tsql\tuse\n",
+                     header + "00\ta\tsystem\t1\tno\tsql\tuse\n",
                      header + "02\tb\tl\t1\tno\tsql\tu\n" + good,  # descending, names distinct
                      header + good + "01\tb\tl\t1\tno\tsql\tu\n",  # a repeated byte
                      header + good + "02\ta\tl\t1\tno\tsql\tu\n",  # a repeated name

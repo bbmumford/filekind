@@ -1,5 +1,5 @@
 """filekind: the identity header, the kinds registry and the canonical row
-digest of the estate's single-file SQLite format, over the standard library's
+digest of a single-file SQLite format, over the standard library's
 sqlite3 (SPEC.md in the repository holds the rules).
 
 Base-3 value helpers live in filekind.base3 and import orbitra only when

@@ -2,7 +2,7 @@
 
 Every function here calls the ternary codec in orbitra.ternary and carries no
 codec of its own: packed trits through codec, integer arrays as balanced trit
-words through trit_words, and lane records (text and JSON with floats as exact
+words through trit_words, and run records (text and JSON with floats as exact
 base-3 pairs and counts as trit records) through trit_float_json. orbitra is
 an optional dependency (the `base3` extra); it is imported on first use, so
 `import filekind` never needs it, and a call without it raises Base3Unavailable
@@ -63,7 +63,7 @@ def words_from_blob(blob: bytes):
 
 
 def record_text(value) -> str:
-    """A JSON-shaped lane record as canonical JSON TEXT, every float replaced
+    """A JSON-shaped run record as canonical JSON TEXT, every float replaced
     by its exact base-3 pair (trit_float_json.floats_to_json)."""
     return canonical_json(_ternary("trit_float_json").floats_to_json(value))
 

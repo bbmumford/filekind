@@ -28,14 +28,14 @@ is set but does not start with `ORB` belongs to **another application**.
 ## 2. The kinds registry
 
 `kinds.tsv` is the one registry. Its first line is the header
-`kind name lane generation encrypted values use`, tab-separated, and each
+`kind name system generation encrypted values use`, tab-separated, and each
 further line is one kind:
 
 | Column | Holds |
 |---|---|
 | kind | the kind byte as two lower-case hex digits, `01` to `ff` |
 | name | the kind's name in lowerCamelCase, unique |
-| lane | who changes the kind's format |
+| system | the system or package whose files are of the kind |
 | generation | the current format generation, a whole number from 1 |
 | encrypted | `yes` when files of the kind hold secrets and are encrypted at rest, else `no` |
 | values | `sql`, `base3` or `radix` (section 7) |
@@ -47,7 +47,7 @@ Rules:
   its row.
 - `00` is never a kind, so an unset kind is always refused.
 - The bytes fall in ranges: `01`-`0f` platform stores, `10`-`1f` audit files,
-  `20`-`3f` training and conversion lanes' files, `40`-`4f` estate tooling,
+  `20`-`3f` training, model and conversion files, `40`-`4f` repository tooling,
   `50`-`5f` package journals. `ff` is `fixture`, the kind of this
   repository's golden vectors and tests; no production reader expects it.
 - A new kind is a new row in the next free byte of its range, added by a
