@@ -1,7 +1,8 @@
 # filekind
 
-The identity header, the kinds registry and the canonical row digest of a
-single-file SQLite format, with one helper in Go and one in Python. Both
+filekind defines one self-describing single-file SQLite format: the identity
+header a file carries, the registry of kinds, and the canonical digest of a
+file's rows, with one helper in Go and one in Python. Both
 implement [SPEC.md](SPEC.md) and pass the same golden vectors.
 
 - **Identity.** `PRAGMA application_id` is `0x4F5242xx`, the bytes `ORB` and a
@@ -90,6 +91,31 @@ vectors through the Turso engine (tursogo); `cd enginetest && go test ./...`.
 Releases are cut by release-please from conventional commit messages
 (`fix:`, `feat:`, and so on); see [AGENTS.md](AGENTS.md).
 
-## License
+## Dependencies
 
-MIT; see [LICENSE](LICENSE).
+- No other package of this estate.
+- `github.com/zeebo/blake3`, for the BLAKE3 half of the digest.
+- Tests only: `modernc.org/sqlite`; `enginetest` requires
+  `turso.tech/database/tursogo` and replaces `github.com/bbmumford/filekind`
+  with `../`.
+
+## Used by
+
+No package in the ORBTR estate imports it yet.
+
+## Platforms and build
+
+Pure Go, no cgo and no build tags. The module's `go` directive is 1.25.0. The
+Python helper needs only the standard library.
+
+## Licence
+
+MIT. Copyright (c) 2026 Brandon Miller-Mumford. The full text is in
+[LICENSE](LICENSE).
+
+## Contributing
+
+[AGENTS.md](AGENTS.md) holds the repository's two rules, for people and coding
+agents alike: no temporary documents in the repository, and conventional commit
+messages that stand on their own. [CLAUDE.md](CLAUDE.md) imports it for Claude
+Code.
