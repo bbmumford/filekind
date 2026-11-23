@@ -26,7 +26,7 @@ def raw(conn, app, version):
 class Registry(unittest.TestCase):
     def test_parses_and_looks_up(self):
         e = filekind.lookup("runLedger")
-        self.assertEqual((e.kind, e.generation, e.values), (0x20, 2, "radix"))
+        self.assertEqual((e.kind, e.generation, e.values), (0x20, 4, "radix"))
         self.assertEqual(filekind.lookup(0x10).name, "auditSegment")
         self.assertIsNone(filekind.lookup(0))
         self.assertEqual(filekind.application_id("runLedger"), 0x4F524220)
@@ -224,6 +224,56 @@ class Header(unittest.TestCase):
         legacy = sqlite3.connect(self.tmp.file("legacy.db"))
         with self.assertRaises(filekind.InvalidArgument):
             filekind.create(legacy, "fixture", 1)
+
+
+class Verify(unittest.TestCase):
+    def test_refuses_a_damaged_file_with_an_intact_header(self):
+        tmp = TempDir()
+        path = tmp.file("damaged.db")
+        conn = connect(path)
+        conn.execute("PRAGMA page_size = 1024")
+        conn.execute("CREATE TABLE t (k INTEGER PRIMARY KEY, v TEXT)")
+        conn.executemany("INSERT INTO t (v) VALUES (?)", [("x" * 200,)] * 40)
+        filekind.stamp(conn, "fixture", 1)
+        conn.close()
+        with open(path, "r+b") as f:
+            f.seek(2 * 1024)
+            f.write(b"\xff" * 1024)
+        self.assertEqual(filekind.read_file_header(path), filekind.Header(FIXTURE, 1))
+        conn = connect(path)
+        filekind.check(conn, filekind.Want("fixture", 1))
+        with self.assertRaises((filekind.NotIntact, sqlite3.DatabaseError)):
+            filekind.verify(conn, filekind.Want("fixture", 1))
+
+    def test_names_what_quick_check_reports(self):
+        """A NULL kept under a column the schema now declares NOT NULL: quick_check
+        answers a row other than "ok", and verify refuses it as NotIntact."""
+        tmp = TempDir()
+        path = tmp.file("constraint.db")
+        conn = connect(path)
+        conn.execute("CREATE TABLE t (a TEXT)")
+        conn.execute("INSERT INTO t VALUES (NULL)")
+        conn.execute("PRAGMA writable_schema = ON")
+        try:
+            conn.execute("UPDATE sqlite_schema SET sql = 'CREATE TABLE t (a TEXT NOT NULL)' WHERE name = 't'")
+        except sqlite3.OperationalError as err:
+            # A SQLite built in defensive mode (Apple's system library) refuses
+            # every write to the schema table, so this file cannot be made here.
+            self.skipTest(f"this SQLite refuses writable_schema: {err}")
+        conn.execute("PRAGMA writable_schema = OFF")
+        filekind.stamp(conn, "fixture", 1)
+        conn.close()
+        with self.assertRaises(filekind.NotIntact):
+            filekind.verify(connect(path), filekind.Want("fixture", 1))
+
+    def test_passes_an_intact_file_and_judges_its_header(self):
+        tmp = TempDir()
+        conn = connect(tmp.fixture("rows.db"))
+        self.assertEqual(filekind.verify(conn, filekind.Want("fixture", 1)).user_version, 1)
+        with self.assertRaises(filekind.WrongKind):
+            filekind.verify(conn, filekind.Want("runLedger", 2))
+        with self.assertRaises(filekind.InvalidArgument):
+            filekind.verify(conn, filekind.Want(0xEE, 1))
 
 
 EXAMPLE = filekind.RowSet(kind="fixture", set="example", table="example", columns=("k", "v"), key=("k",))

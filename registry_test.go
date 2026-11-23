@@ -15,7 +15,7 @@ func TestRegistryParses(t *testing.T) {
 	if len(entries) == 0 {
 		t.Fatal("kinds.tsv holds no kinds")
 	}
-	if e, ok := Lookup(RunLedger); !ok || e.Name != "runLedger" || e.Generation != 2 || e.Values != Radix {
+	if e, ok := Lookup(RunLedger); !ok || e.Name != "runLedger" || e.Generation != 4 || e.Values != Radix {
 		t.Fatalf("Lookup(RunLedger) = %+v, %v", e, ok)
 	}
 	if e, ok := ByName("auditSegment"); !ok || e.Kind != AuditSegment || e.Encrypted {

@@ -7,7 +7,7 @@ kind	name	lane	generation	encrypted	values	use
 06	devicePolicyStore	execution-platform	1	no	sql	the verified policy bundle segments and overlays a device admits against, each overlay constrained to its base
 10	auditSegment	sqlite-artifacts	1	no	sql	a sealed audit segment: audit_log rows with their triggers, the checkpoint, manifest, redaction ruleset and signatures
 11	auditExport	sqlite-artifacts	1	no	sql	a signed audit export bundle over the same audit_log rows, with the export's fields
-20	runLedger	programme-ledger, shared with DM-corpus	2	no	radix	one ledger shared by both governors: governed jobs and their run records (pins, head moves, readings, verdicts, lock waits, launches), each row naming the radix of its numbers
+20	runLedger	programme-ledger, shared with DM-corpus	4	no	radix	one ledger shared by both governors: governed jobs and their run records (pins, head moves, readings, verdicts, lock waits, launches), each row naming the radix of its numbers
 21	encodedIds	continuous-field	1	no	base3	a training corpus's encoded-ids kept file, held as the database itself
 22	runEvents	continuous-field	1	no	base3	one event store per training run, written by one writer
 23	runRecords	continuous-field	1	no	base3	a training run's own records, when they are kept apart from the run ledger
@@ -18,7 +18,7 @@ kind	name	lane	generation	encrypted	values	use
 28	efferentGateRecord	cf-designer	1	no	base3	the efferent gate's append-only record of every pattern it admits or refuses, one writer per session
 29	teacherFieldRecord	ternary-transformer	1	no	base3	a teacher's field record: the field converter's stage records
 40	removalLedger	lead	1	no	base3	one ledger of the files every lane has set aside for removal, with each one's manifest entry
-41	decisionIndex	programme-ledger	2	no	sql	a derived index over both decisions folders and the checkpoint seal catalogue; the sources stay the authority and a test re-derives the rows
+41	decisionIndex	programme-ledger	3	no	sql	a derived index over both decisions folders and the checkpoint seal catalogue; the sources stay the authority and a test re-derives the rows
 42	guardIndex	guard-speed	1	no	sql	a derived index of the source tree that the guard suites query instead of walking it
 43	pluginContributions	execution-platform	1	no	sql	the plugin catalogue's contributions as rows derived beside the signed manifest
 44	docsSearchIndex	sqlite-artifacts	1	no	sql	the read-only search index the documentation site serves

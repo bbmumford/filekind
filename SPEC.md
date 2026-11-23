@@ -304,8 +304,11 @@ A verifier of a file it did not write:
 4. checks the header (section 3);
 5. digests base tables only (section 6), and never reads a view.
 
-The helpers do steps 4 and 5. Steps 1 to 3 belong to the caller, whose engine
-and data-source name the open and the pragmas are. The Turso engine accepts `ATTACH`
+Steps 1 and 2 belong to the caller, whose engine and data-source name the open
+and the pragmas are. The helpers' Verify (Go) and verify (Python) do steps 3
+and 4: quick_check must answer the one row `ok`, or the file is refused as
+NotIntact (an engine that refuses to read a damaged page returns its own
+error instead), and then the header is checked. The digest does step 5. The Turso engine accepts `ATTACH`
 only when its data-source name carries `experimental=attach`, and runs
 triggers, `RAISE(ABORT)` included, without any flag.
 
@@ -334,6 +337,7 @@ fixed vectors: their tests compute every expected value by calling the codec.
 | GenerationBackwards | `ErrGenerationBackwards` | `filekind.GenerationBackwards` |
 | StampNotHeld | `ErrStampNotHeld` | `filekind.StampNotHeld` |
 | CheckpointBusy | `ErrCheckpointBusy` | `filekind.CheckpointBusy` |
+| NotIntact | `ErrNotIntact` | `filekind.NotIntact` |
 | UnreadableHeader | `ErrUnreadableHeader` | `filekind.UnreadableHeader` |
 | NotPlainFile | `ErrNotPlainFile` | `filekind.NotPlainFile` |
 | InvalidArgument | `ErrInvalidArgument` | `filekind.InvalidArgument` |

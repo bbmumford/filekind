@@ -203,3 +203,16 @@ def read_file_header(path) -> Header:
     if head[:16] != SQLITE_MAGIC:
         raise E.NotPlainFile("not a plaintext SQLite file")
     return Header(int.from_bytes(head[68:72], "big", signed=True), int.from_bytes(head[60:64], "big", signed=True))
+
+
+def verify(conn, want: Want) -> Header:
+    """Check a file from elsewhere that the caller opened read-only, its size
+    bounded first and query_only and trusted_schema=OFF set where supported:
+    PRAGMA quick_check must answer the one row "ok", then the header must
+    satisfy want. The refusal names how many rows quick_check returned, never
+    their text."""
+    _valid(want)
+    answers = [row[0] for row in conn.execute("PRAGMA quick_check").fetchall()]
+    if answers != ["ok"]:
+        raise E.NotIntact(f"quick_check returned {len(answers)} rows")
+    return check(conn, want)

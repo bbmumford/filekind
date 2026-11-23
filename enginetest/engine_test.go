@@ -239,3 +239,15 @@ func TestTursoStampAndCreate(t *testing.T) {
 		t.Fatalf("lowering the generation = %v", err)
 	}
 }
+
+// TestTursoVerify: the Turso engine answers quick_check on an intact file with
+// the one row "ok", so Verify passes it and judges its header.
+func TestTursoVerify(t *testing.T) {
+	db := fixture(t, "rows.db")
+	if h, err := filekind.Verify(context.Background(), db, filekind.Want{Kind: filekind.Fixture, Newest: 1}); err != nil || h.UserVersion != 1 {
+		t.Fatalf("Verify on tursogo = %+v, %v", h, err)
+	}
+	if _, err := filekind.Verify(context.Background(), db, filekind.Want{Kind: filekind.RunLedger, Newest: 2}); !errors.Is(err, filekind.ErrWrongKind) {
+		t.Fatalf("Verify of the wrong kind on tursogo = %v", err)
+	}
+}

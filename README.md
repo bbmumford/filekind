@@ -45,7 +45,9 @@ d, err := filekind.DigestRows(ctx, db, filekind.RowSet{
 fmt.Println(d.SHA256Hex(), d.BLAKE3Hex(), d.Rows)
 ```
 
-`Create` makes a new file of a kind on a `*sql.Conn`; `CheckValues` enforces a
+`Verify` checks a file from elsewhere (quick_check, then the header) once the
+caller has opened it read-only; `Create` makes a new file of a kind on a
+`*sql.Conn`; `CheckValues` enforces a
 `base3` kind's value rule; `CanonicalJSON` rewrites a JSON document in the
 canonical form; `ReadFileHeader` reads the two fields from a plaintext file
 without an engine.

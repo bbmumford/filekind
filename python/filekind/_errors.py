@@ -59,6 +59,10 @@ class CheckpointBusy(FileKindError):
     """The checkpoint could not move every WAL frame into the main file."""
 
 
+class NotIntact(FileKindError):
+    """PRAGMA quick_check did not answer the single row "ok"."""
+
+
 class UnreadableHeader(FileKindError):
     """A header pragma did not answer one integer."""
 
@@ -105,7 +109,7 @@ OUTCOMES = {
     for cls in (
         Unstamped, ForeignFile, UnknownKind, WrongKind, NoGeneration, NewerGeneration,
         OlderGeneration, GenerationBackwards, StampNotHeld, CheckpointBusy, UnreadableHeader,
-        NotPlainFile, InvalidArgument, NotBaseTable, KeyNotUnique, ValueType, InvalidText,
+        NotPlainFile, NotIntact, InvalidArgument, NotBaseTable, KeyNotUnique, ValueType, InvalidText,
         BinaryNumber, InvalidJSON, NotWAL,
     )
 }
