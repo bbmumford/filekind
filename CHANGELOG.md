@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/bbmumford/filekind/compare/v0.1.0...v0.1.1) (2026-11-24)
+
+
+### Bug Fixes
+
+* every Close, Flush and buffered write result is checked, or dropped where the code says why ([2f4e64a](https://github.com/bbmumford/filekind/commit/2f4e64a750f6a56c8f3b7bbb1d561902c9096050))
+
 ## 0.1.0 (2026-11-24)
 
 
