@@ -145,13 +145,13 @@ func TestCreateRunsOnceUnderARace(t *testing.T) {
 				errs[i] = err
 				return
 			}
-			defer db.Close()
+			defer func() { errs[i] = errors.Join(errs[i], db.Close()) }()
 			conn, err := db.Conn(ctx)
 			if err != nil {
 				errs[i] = err
 				return
 			}
-			defer conn.Close()
+			defer func() { errs[i] = errors.Join(errs[i], conn.Close()) }()
 			_, errs[i] = Create(ctx, conn, Fixture, 1, schema)
 		}(i)
 	}
@@ -177,7 +177,7 @@ func TestCreateChecksAFileItDoesNotMake(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer conn.Close()
+	closeAtEnd(t, conn)
 	if _, err := Create(ctx, conn, Fixture, 1, []string{"CREATE TABLE t (k INTEGER PRIMARY KEY)"}); err != nil {
 		t.Fatal(err)
 	}
@@ -197,7 +197,7 @@ func TestCreateChecksAFileItDoesNotMake(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer oc.Close()
+	closeAtEnd(t, oc)
 	if _, err := Create(ctx, oc, Fixture, 1, nil); !errors.Is(err, ErrUnstamped) {
 		t.Fatalf("Create over an unstamped file with a schema = %v, want ErrUnstamped", err)
 	}
@@ -238,12 +238,12 @@ func TestCreateWaitsForACreatorHoldingTheWriteLock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer other.Close()
+	closeAtEnd(t, other)
 	holder, err := other.Conn(ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer holder.Close()
+	closeAtEnd(t, holder)
 	exec(t, holder, "BEGIN IMMEDIATE")
 
 	done := make(chan error, 1)
@@ -253,13 +253,13 @@ func TestCreateWaitsForACreatorHoldingTheWriteLock(t *testing.T) {
 			done <- err
 			return
 		}
-		defer db.Close()
+		closeAtEnd(t, db)
 		conn, err := db.Conn(ctx)
 		if err != nil {
 			done <- err
 			return
 		}
-		defer conn.Close()
+		closeAtEnd(t, conn)
 		_, err = Create(ctx, conn, Fixture, 1, []string{"CREATE TABLE log (k TEXT PRIMARY KEY)"})
 		done <- err
 	}()

@@ -25,7 +25,7 @@ func Verify(ctx context.Context, q Querier, want Want) (Header, error) {
 	if err != nil {
 		return Header{}, err
 	}
-	defer rows.Close()
+	defer closeOnEarlyReturn(rows)
 	var answers []string
 	for rows.Next() {
 		var v any

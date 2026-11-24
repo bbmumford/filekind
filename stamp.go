@@ -66,7 +66,7 @@ func Checkpoint(ctx context.Context, q Querier) error {
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer closeOnEarlyReturn(rows)
 	if !rows.Next() {
 		if err := rows.Err(); err != nil {
 			return err
@@ -177,7 +177,7 @@ func schemaObjects(ctx context.Context, q Querier) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer rows.Close()
+	defer closeOnEarlyReturn(rows)
 	n := 0
 	for rows.Next() {
 		n++

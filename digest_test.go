@@ -167,11 +167,12 @@ func TestReadCellCanonicalisesNegativeZero(t *testing.T) {
 		t.Fatal(err)
 	}
 	var a, b bytes.Buffer
-	wa, wb := bufioWriter(&a), bufioWriter(&b)
+	wa, wb := streamTo(&a), streamTo(&b)
 	negative.encode(wa)
 	positive.encode(wb)
-	wa.Flush()
-	wb.Flush()
+	if err := errors.Join(wa.flush(), wb.flush()); err != nil {
+		t.Fatal(err)
+	}
 	if !bytes.Equal(a.Bytes(), b.Bytes()) {
 		t.Fatalf("-0.0 encodes as %x, +0.0 as %x", a.Bytes(), b.Bytes())
 	}

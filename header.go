@@ -122,7 +122,9 @@ func ReadFileHeader(path string) (Header, error) {
 	if err != nil {
 		return Header{}, err
 	}
-	defer f.Close()
+	// The file is opened only to read 100 bytes; a failed close cannot undo
+	// the read, so its error is dropped.
+	defer func() { _ = f.Close() }()
 	buf := make([]byte, 100)
 	n, err := io.ReadFull(f, buf)
 	if n == 0 && (errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF)) {
@@ -147,7 +149,7 @@ func pragmaInt(ctx context.Context, q Querier, pragma string) (int32, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer rows.Close()
+	defer closeOnEarlyReturn(rows)
 	if !rows.Next() {
 		if err := rows.Err(); err != nil {
 			return 0, err

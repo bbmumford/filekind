@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -22,6 +23,16 @@ func openFile(t *testing.T, path string) *sql.DB {
 	db.SetMaxOpenConns(1)
 	t.Cleanup(func() { _ = db.Close() })
 	return db
+}
+
+// closeAtEnd closes c when the test ends and fails the test if closing fails.
+func closeAtEnd(t *testing.T, c io.Closer) {
+	t.Helper()
+	t.Cleanup(func() {
+		if err := c.Close(); err != nil {
+			t.Errorf("close: %v", err)
+		}
+	})
 }
 
 // newFile opens a new database file in a fresh temporary directory.

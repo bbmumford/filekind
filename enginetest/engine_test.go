@@ -212,7 +212,11 @@ func TestTursoStampAndCreate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer conn.Close()
+	t.Cleanup(func() {
+		if err := conn.Close(); err != nil {
+			t.Errorf("close: %v", err)
+		}
+	})
 	h, err := filekind.Create(ctx, conn, filekind.Fixture, 1, []string{"CREATE TABLE t (k TEXT PRIMARY KEY, v BLOB)"})
 	if err != nil || h != (filekind.Header{ApplicationID: filekind.Fixture.ApplicationID(), UserVersion: 1}) {
 		t.Fatalf("Create = %+v, %v", h, err)

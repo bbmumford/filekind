@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
@@ -93,14 +94,14 @@ func EncodeRows(ctx context.Context, q Querier, set RowSet, w io.Writer) (uint64
 	if err := requireBaseTable(ctx, q, set.Schema, set.Table); err != nil {
 		return 0, err
 	}
-	bw := bufio.NewWriter(w)
-	writeStreamHeader(bw, set)
+	out := stream{bufio.NewWriter(w)}
+	writeStreamHeader(out, set)
 
 	rows, err := q.QueryContext(ctx, set.query(), set.Args...)
 	if err != nil {
 		return 0, err
 	}
-	defer rows.Close()
+	defer closeOnEarlyReturn(rows)
 	width := 2 * (len(set.Key) + len(set.Columns))
 	cells := make([]any, width)
 	ptrs := make([]any, width)
@@ -129,7 +130,7 @@ func EncodeRows(ctx context.Context, q Querier, set RowSet, w io.Writer) (uint64
 			return count, ErrKeyNotUnique
 		}
 		for _, c := range current[len(set.Key):] {
-			c.encode(bw)
+			c.encode(out)
 		}
 		previous = append(previous[:0], key...)
 		count++
@@ -137,15 +138,34 @@ func EncodeRows(ctx context.Context, q Querier, set RowSet, w io.Writer) (uint64
 	if err := rows.Err(); err != nil {
 		return count, err
 	}
-	bw.WriteByte(tagEnd)
-	var n [8]byte
-	binary.BigEndian.PutUint64(n[:], count)
-	bw.Write(n[:])
-	if err := bw.Flush(); err != nil {
+	out.tag(tagEnd)
+	out.u64(count)
+	if err := out.flush(); err != nil {
 		return count, err
 	}
 	return count, rows.Close()
 }
+
+// closeOnEarlyReturn is the deferred Close of rows in every function here that
+// reads rows: it runs on a return that already carries the error that stopped
+// the read, so its own error is dropped. Each of those functions returns
+// rows.Close()'s error itself on its normal path, where nothing else is wrong,
+// and database/sql lets Close run again after that.
+func closeOnEarlyReturn(rows *sql.Rows) { _ = rows.Close() }
+
+// stream writes the canonical stream. bufio.Writer keeps the first error a
+// write meets and returns it again from every later write and from Flush, so
+// each write here drops its own result and EncodeRows checks flush, which
+// carries that first error.
+type stream struct{ w *bufio.Writer }
+
+func (s stream) raw(b []byte)  { _, _ = s.w.Write(b) }
+func (s stream) tag(t byte)    { _ = s.w.WriteByte(t) }
+func (s stream) text(v string) { _, _ = s.w.WriteString(v) }
+func (s stream) str(v string)  { s.u32(uint32(len(v))); s.text(v) }
+func (s stream) flush() error  { return s.w.Flush() }
+func (s stream) u32(v uint32)  { s.raw(binary.BigEndian.AppendUint32(nil, v)) }
+func (s stream) u64(v uint64)  { s.raw(binary.BigEndian.AppendUint64(nil, v)) }
 
 func (s RowSet) valid() error {
 	bad := func(what string) error { return fmt.Errorf("%w: row set %s", ErrInvalidArgument, what) }
@@ -229,7 +249,7 @@ func requireBaseTable(ctx context.Context, q Querier, schema, table string) erro
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
+	defer closeOnEarlyReturn(rows)
 	found := false
 	for rows.Next() {
 		var kind, name, text any
@@ -288,31 +308,20 @@ func asString(v any) string {
 
 // writeStreamHeader writes the magic and the domain: the kind's
 // application_id, the set label, the table, the columns and the key.
-func writeStreamHeader(w *bufio.Writer, s RowSet) {
-	w.WriteString(streamMagic)
-	var n [4]byte
-	binary.BigEndian.PutUint32(n[:], uint32(s.Kind.ApplicationID()))
-	w.Write(n[:])
-	writeString(w, s.Set)
-	writeString(w, s.Table)
-	writeList(w, s.Columns)
-	writeList(w, s.Key)
+func writeStreamHeader(out stream, s RowSet) {
+	out.text(streamMagic)
+	out.u32(uint32(s.Kind.ApplicationID()))
+	out.str(s.Set)
+	out.str(s.Table)
+	writeList(out, s.Columns)
+	writeList(out, s.Key)
 }
 
-func writeList(w *bufio.Writer, names []string) {
-	var n [4]byte
-	binary.BigEndian.PutUint32(n[:], uint32(len(names)))
-	w.Write(n[:])
+func writeList(out stream, names []string) {
+	out.u32(uint32(len(names)))
 	for _, name := range names {
-		writeString(w, name)
+		out.str(name)
 	}
-}
-
-func writeString(w *bufio.Writer, s string) {
-	var n [4]byte
-	binary.BigEndian.PutUint32(n[:], uint32(len(s)))
-	w.Write(n[:])
-	w.WriteString(s)
 }
 
 // cell is one value with the storage class typeof reported for it.
@@ -380,20 +389,16 @@ func readCell(class, value any) (cell, error) {
 	return cell{}, fmt.Errorf("%w: storage class %q", ErrValueType, name)
 }
 
-func (c cell) encode(w *bufio.Writer) {
-	w.WriteByte(c.tag)
-	var n [8]byte
+func (c cell) encode(out stream) {
+	out.tag(c.tag)
 	switch c.tag {
 	case tagInteger:
-		binary.BigEndian.PutUint64(n[:], uint64(c.i))
-		w.Write(n[:])
+		out.u64(uint64(c.i))
 	case tagReal:
-		binary.BigEndian.PutUint64(n[:], math.Float64bits(c.f))
-		w.Write(n[:])
+		out.u64(math.Float64bits(c.f))
 	case tagText, tagBlob:
-		binary.BigEndian.PutUint32(n[:4], uint32(len(c.bytes)))
-		w.Write(n[:4])
-		w.Write(c.bytes)
+		out.u32(uint32(len(c.bytes)))
+		out.raw(c.bytes)
 	}
 }
 

@@ -61,7 +61,7 @@ func userTables(ctx context.Context, q Querier) ([]table, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer closeOnEarlyReturn(rows)
 	var out []table
 	for rows.Next() {
 		var name, text any
@@ -89,7 +89,7 @@ func tableColumns(ctx context.Context, q Querier, t table) ([]column, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer closeOnEarlyReturn(rows)
 	type info struct {
 		name, declared string
 		pk             int64
@@ -125,7 +125,7 @@ func holdsBinaryNumber(ctx context.Context, q Querier, tableName, columnName str
 	if err != nil {
 		return false, err
 	}
-	defer rows.Close()
+	defer closeOnEarlyReturn(rows)
 	hit := rows.Next()
 	if err := rows.Err(); err != nil {
 		return false, err
