@@ -12,7 +12,7 @@ permissions:
   contents: write
 
 env:
-  GO_VERSION: '1.25.0'
+  GO_VERSION: '1.27.4'
 
 jobs:
   go:
@@ -26,7 +26,8 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.11.2
+          # v2.11 cannot read the export data of the Go release above; v2.15 can.
+          version: v2.15.0
 
       - name: go vet
         run: go vet ./...
@@ -44,16 +45,16 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...
 
+  # Each supported Python runs in its official image, which keeps versions the
+  # runner's own Python installer no longer offers, 3.9 among them.
   python:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python: ['3.9', '3.12', '3.13']
+    container: python:${{ matrix.python }}-slim
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python }}
       - name: unittest
         working-directory: python/tests
         env:
@@ -64,8 +65,10 @@ jobs:
           python -m pip install ./python
           python -c "import filekind; print(len(filekind.registry()))"
 
+  # A release needs a tag; a run dispatched on a branch checks the code only.
   release:
     needs: [go, python]
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
