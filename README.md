@@ -109,7 +109,8 @@ database file through it.
 ## Platforms and build
 
 Pure Go, no cgo and no build tags. The module's `go` directive is 1.25.0. The
-Python helper needs only the standard library.
+Python helper needs only the standard library and supports Python 3.9 and
+later; the release checks run it on 3.9, 3.12 and 3.13.
 
 ## Licence
 
