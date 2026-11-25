@@ -44,20 +44,27 @@ def _valid(want: Want) -> int:
     return byte
 
 
-def _pragma_int(conn, pragma: str) -> int:
-    rows = conn.execute(pragma).fetchall()
-    if len(rows) != 1 or len(rows[0]) != 1:
-        raise E.UnreadableHeader(f"{pragma} did not return one row of one value")
-    value = rows[0][0]
+# Both header fields in one statement. One statement reads one snapshot of the
+# file, so a reader racing a writer that stamps it reads the header from before
+# the stamp's commit or from after it, never one field of each.
+HEADER_QUERY = ("SELECT a.application_id, v.user_version "
+                "FROM pragma_application_id AS a, pragma_user_version AS v")
+
+
+def _header_int(field: str, value) -> int:
     if isinstance(value, bool) or not isinstance(value, int) or not -(2 ** 31) <= value < 2 ** 31:
-        raise E.UnreadableHeader(f"{pragma} returned {type(value).__name__}")
+        raise E.UnreadableHeader(f"{field} read as {type(value).__name__}")
     return value
 
 
 def read_header(conn) -> Header:
     """The header through the engine, which reads the WAL as well as the main
-    file, so a value set and not yet checkpointed is already the value read."""
-    return Header(_pragma_int(conn, "PRAGMA application_id"), _pragma_int(conn, "PRAGMA user_version"))
+    file, so a value set and not yet checkpointed is already the value read.
+    Both fields come from one statement, HEADER_QUERY."""
+    rows = conn.execute(HEADER_QUERY).fetchall()
+    if len(rows) != 1 or len(rows[0]) != 2:
+        raise E.UnreadableHeader("the header query did not return one row of two values")
+    return Header(_header_int("application_id", rows[0][0]), _header_int("user_version", rows[0][1]))
 
 
 def expect(header: Header, want: Want) -> None:

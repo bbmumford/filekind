@@ -59,8 +59,11 @@ Rules:
 
 A reader states what it expects: a kind, the newest generation its code reads,
 and optionally the oldest. It reads both header fields **through the engine**
-(the pragmas), which reads the WAL as well as the main file, and refuses the
-file unless it holds that kind at a generation in that range. The refusals are
+(the pragmas), which reads the WAL as well as the main file, in one statement
+(`SELECT a.application_id, v.user_version FROM pragma_application_id AS a,
+pragma_user_version AS v`), so both come from one snapshot and a reader racing
+a stamp's commit never sees one field without the other; it refuses the file
+unless it holds that kind at a generation in that range. The refusals are
 tried in this order, so one header always earns one name:
 
 | Order | Refusal | When |

@@ -2,6 +2,7 @@ package filekind
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"os"
@@ -72,6 +73,40 @@ func TestCheckRefusesAnExpectationNoFileMeets(t *testing.T) {
 		if _, err := Check(context.Background(), db, w); !errors.Is(err, ErrInvalidArgument) {
 			t.Fatalf("Check(%+v) = %v, want ErrInvalidArgument", w, err)
 		}
+	}
+}
+
+// stampsBetweenStatements lets another connection commit a whole stamp after
+// the first statement a reader sends through it, the moment a racing creator
+// can.
+type stampsBetweenStatements struct {
+	t          *testing.T
+	reader     Querier
+	writer     *sql.DB
+	statements int
+}
+
+func (s *stampsBetweenStatements) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+	if s.statements == 1 {
+		exec(s.t, s.writer, "BEGIN IMMEDIATE",
+			fmt.Sprintf("PRAGMA application_id = %d", Fixture.ApplicationID()), "PRAGMA user_version = 1", "COMMIT")
+	}
+	s.statements++
+	return s.reader.QueryContext(ctx, query, args...)
+}
+
+// A reader racing a creator reads the header from before its commit or from
+// after it, never one field of each.
+func TestReadNeverReadsHalfAStamp(t *testing.T) {
+	ctx := context.Background()
+	reader, path := newFile(t)
+	writer := openFile(t, path)
+	h, err := Read(ctx, &stampsBetweenStatements{t: t, reader: reader, writer: writer})
+	if err != nil {
+		t.Fatalf("Read: %v", err)
+	}
+	if h != (Header{}) && h != (Header{ApplicationID: Fixture.ApplicationID(), UserVersion: 1}) {
+		t.Fatalf("Read = %+v: one field from before a stamp and one from after it", h)
 	}
 }
 

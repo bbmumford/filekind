@@ -157,6 +157,31 @@ class Header(unittest.TestCase):
         with self.assertRaises(filekind.StampNotHeld):
             filekind.set_header(Dropping(), "fixture", 1)
 
+    def test_read_header_never_reads_half_a_stamp(self):
+        path = self.tmp.file("torn.db")
+        conn = connect(path)
+        writer = connect(path)
+
+        class StampsBetweenStatements:
+            """Lets another connection commit a whole stamp after the first
+            statement the reader sends, the moment a racing creator can."""
+
+            def __init__(self):
+                self.statements = 0
+
+            def execute(self, sql, *args):
+                if self.statements == 1:
+                    writer.execute("BEGIN IMMEDIATE")
+                    writer.execute(f"PRAGMA application_id = {filekind.application_id('fixture')}")
+                    writer.execute("PRAGMA user_version = 1")
+                    writer.execute("COMMIT")
+                self.statements += 1
+                return conn.execute(sql, *args)
+
+        h = filekind.read_header(StampsBetweenStatements())
+        self.assertIn(h, (filekind.Header(0, 0), filekind.Header(filekind.application_id("fixture"), 1)),
+                      "the header read holds one field from before a stamp and one from after it")
+
     def test_set_header_rolls_back_with_its_transaction(self):
         conn = self.conn()
         conn.execute("BEGIN")

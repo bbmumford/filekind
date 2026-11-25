@@ -32,19 +32,45 @@ type Header struct {
 // 'ORB' prefix.
 func (h Header) Kind() (Kind, bool) { return KindOf(h.ApplicationID) }
 
+// headerQuery reads both header fields in one statement. One statement reads
+// one snapshot of the file, so a reader racing a writer that stamps it (Create's
+// transaction sets both fields and commits them together) reads the header from
+// before the commit or from after it, never one field of each.
+const headerQuery = "SELECT a.application_id, v.user_version FROM pragma_application_id AS a, pragma_user_version AS v"
+
 // Read returns the header through the engine, which reads the WAL as well as
 // the main file, so a value set and not yet checkpointed is already the value
-// read here.
+// read here. Both fields come from one statement, headerQuery.
 func Read(ctx context.Context, q Querier) (Header, error) {
-	app, err := pragmaInt(ctx, q, "PRAGMA application_id")
+	rows, err := q.QueryContext(ctx, headerQuery)
 	if err != nil {
 		return Header{}, err
 	}
-	version, err := pragmaInt(ctx, q, "PRAGMA user_version")
-	if err != nil {
+	defer closeOnEarlyReturn(rows)
+	if !rows.Next() {
+		if err := rows.Err(); err != nil {
+			return Header{}, err
+		}
+		return Header{}, fmt.Errorf("%w: the header query returned no row", ErrUnreadableHeader)
+	}
+	var app, version any
+	if err := rows.Scan(&app, &version); err != nil {
 		return Header{}, err
 	}
-	return Header{ApplicationID: app, UserVersion: version}, nil
+	h := Header{}
+	if h.ApplicationID, err = headerInt("application_id", app); err != nil {
+		return Header{}, err
+	}
+	if h.UserVersion, err = headerInt("user_version", version); err != nil {
+		return Header{}, err
+	}
+	if rows.Next() {
+		return Header{}, fmt.Errorf("%w: the header query returned more than one row", ErrUnreadableHeader)
+	}
+	if err := rows.Err(); err != nil {
+		return Header{}, err
+	}
+	return h, rows.Close()
 }
 
 // Check reads the header and refuses it unless it holds want's kind at a
@@ -142,35 +168,14 @@ func ReadFileHeader(path string) (Header, error) {
 	}, nil
 }
 
-// pragmaInt runs a pragma that answers one row of one integer and returns it.
-// Anything else, including a value outside 32 bits, is ErrUnreadableHeader.
-func pragmaInt(ctx context.Context, q Querier, pragma string) (int32, error) {
-	rows, err := q.QueryContext(ctx, pragma)
-	if err != nil {
-		return 0, err
-	}
-	defer closeOnEarlyReturn(rows)
-	if !rows.Next() {
-		if err := rows.Err(); err != nil {
-			return 0, err
-		}
-		return 0, fmt.Errorf("%w: %s returned no row", ErrUnreadableHeader, pragma)
-	}
-	var v any
-	if err := rows.Scan(&v); err != nil {
-		return 0, err
-	}
+// headerInt takes one header field's value as the engine answered it: an
+// integer within 32 bits. Anything else is ErrUnreadableHeader.
+func headerInt(field string, v any) (int32, error) {
 	n, ok := v.(int64)
 	if !ok || n < math.MinInt32 || n > math.MaxInt32 {
-		return 0, fmt.Errorf("%w: %s returned %T", ErrUnreadableHeader, pragma, v)
+		return 0, fmt.Errorf("%w: %s read as %T", ErrUnreadableHeader, field, v)
 	}
-	if rows.Next() {
-		return 0, fmt.Errorf("%w: %s returned more than one row", ErrUnreadableHeader, pragma)
-	}
-	if err := rows.Err(); err != nil {
-		return 0, err
-	}
-	return int32(n), rows.Close()
+	return int32(n), nil
 }
 
 // run sends one statement as a query and drains its rows.
