@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/bbmumford/filekind/compare/v0.1.1...v0.1.2) (2026-11-25)
+
+
+### Bug Fixes
+
+* Read takes application_id and user_version from one statement, so a reader racing a stamp never sees one without the other ([0147c47](https://github.com/bbmumford/filekind/commit/0147c479d33aded60d929141894306929b691c43))
+
 ## [0.1.1](https://github.com/bbmumford/filekind/compare/v0.1.0...v0.1.1) (2026-11-24)
 
 
