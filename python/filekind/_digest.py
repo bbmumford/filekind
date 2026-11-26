@@ -95,7 +95,8 @@ def query(rs: RowSet) -> str:
     for name in tuple(rs.key) + tuple(rs.columns):
         q = quote_name(name)
         parts.append(f"typeof({q}), +{q}")
-    source = (quote_name(rs.schema) + "." if rs.schema else "") + quote_name(rs.table)
+    # Always qualified: an unqualified name resolves to a TEMP table first.
+    source = quote_name(rs.schema or "main") + "." + quote_name(rs.table)
     text = "SELECT " + ", ".join(parts) + " FROM " + source
     if rs.where:
         text += " WHERE (" + rs.where + ")"

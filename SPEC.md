@@ -180,9 +180,13 @@ double quotes (an inner `"` doubled):
 ```sql
 SELECT typeof("k1"), +"k1", …, typeof("kn"), +"kn",
        typeof("c1"), +"c1", …, typeof("cm"), +"cm"
-FROM ["schema".]"table" [WHERE (where)]
+FROM "schema"."table" [WHERE (where)]
 ORDER BY "k1" COLLATE BINARY, …, "kn" COLLATE BINARY
 ```
+
+The schema is the row set's, or `main` when it names none: the table is always
+read qualified, because an unqualified name resolves to a TEMP table of that
+name first, and the base-table check reads the same schema's `sqlite_schema`.
 
 `typeof` gives each value's storage class as the engine holds it, and the unary
 plus gives the same value with no declared type, so no driver converts it by

@@ -101,7 +101,7 @@ func EncodeRows(ctx context.Context, q Querier, set RowSet, w io.Writer) (uint64
 	if err := set.valid(); err != nil {
 		return 0, err
 	}
-	if err := requireBaseTable(ctx, q, set.Schema, set.Table); err != nil {
+	if err := requireBaseTable(ctx, q, set.schema(), set.Table); err != nil {
 		return 0, err
 	}
 	out := stream{bufio.NewWriter(w)}
@@ -221,6 +221,18 @@ func validName(name string) bool {
 
 func quoteName(name string) string { return `"` + strings.ReplaceAll(name, `"`, `""`) + `"` }
 
+// schema is the database the set's table is read from: Schema, or "main" when
+// it names none. The table is always read qualified, because an unqualified
+// name resolves to a TEMP table of that name first, which the connection's own
+// statements can create; requireBaseTable judges the same schema's
+// sqlite_schema, so the table judged and the table read are one.
+func (s RowSet) schema() string {
+	if s.Schema == "" {
+		return "main"
+	}
+	return s.Schema
+}
+
 // query is the one statement a row set is read through (SPEC.md, "The query").
 // Each value is selected as typeof(x) beside +x: typeof is the storage class
 // the engine holds, and the unary plus is the same value with no declared
@@ -239,10 +251,7 @@ func (s RowSet) query() string {
 		b.WriteString("typeof(" + q + "), +" + q)
 	}
 	b.WriteString(" FROM ")
-	if s.Schema != "" {
-		b.WriteString(quoteName(s.Schema) + ".")
-	}
-	b.WriteString(quoteName(s.Table))
+	b.WriteString(quoteName(s.schema()) + "." + quoteName(s.Table))
 	if s.Where != "" {
 		b.WriteString(" WHERE (" + s.Where + ")")
 	}
