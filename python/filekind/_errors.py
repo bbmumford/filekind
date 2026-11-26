@@ -79,6 +79,11 @@ class NotBaseTable(FileKindError):
     """A row set names a view, a virtual table, an engine table or nothing."""
 
 
+class KeyNotCovered(FileKindError):
+    """A row set's key names a column outside its columns and the set does not
+    say so with unsigned_key."""
+
+
 class KeyNotUnique(FileKindError):
     """Two rows of a row set tie on its key."""
 
@@ -109,7 +114,7 @@ OUTCOMES = {
     for cls in (
         Unstamped, ForeignFile, UnknownKind, WrongKind, NoGeneration, NewerGeneration,
         OlderGeneration, GenerationBackwards, StampNotHeld, CheckpointBusy, UnreadableHeader,
-        NotPlainFile, NotIntact, InvalidArgument, NotBaseTable, KeyNotUnique, ValueType, InvalidText,
+        NotPlainFile, NotIntact, InvalidArgument, NotBaseTable, KeyNotCovered, KeyNotUnique, ValueType, InvalidText,
         BinaryNumber, InvalidJSON, NotWAL,
     )
 }

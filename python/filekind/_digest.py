@@ -20,7 +20,11 @@ class RowSet:
     """The rows a digest covers: columns of the base table, ordered by key
     under BINARY collation, separated by kind and set. The key must be unique
     over the rows `where` selects; `args` are its parameters; `schema` names an
-    attached database, empty for the main one."""
+    attached database, empty for the main one. Every key column must also be a
+    column, because the stream holds only the columns' values and a signed
+    digest binds a row's key only through them; `unsigned_key` states that the
+    key's values are not part of what the digest binds, and only then may a key
+    column be outside the columns (KeyNotCovered otherwise)."""
 
     kind: object
     set: str
@@ -30,6 +34,7 @@ class RowSet:
     where: str = ""
     args: tuple = field(default=())
     schema: str = ""
+    unsigned_key: bool = False
 
 
 @dataclass(frozen=True)
@@ -73,6 +78,10 @@ def _check(rs: RowSet) -> None:
         raise bad("has no columns or no key")
     if not all(_valid_name(n) for n in tuple(rs.columns) + tuple(rs.key)):
         raise bad("column name is empty or not UTF-8")
+    if not rs.unsigned_key:
+        for name in rs.key:
+            if name not in tuple(rs.columns):
+                raise E.KeyNotCovered(f"row set key column {name!r} is outside its columns")
 
 
 def quote_name(name: str) -> str:

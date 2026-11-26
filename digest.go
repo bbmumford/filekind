@@ -41,15 +41,25 @@ const (
 // ErrKeyNotUnique rather than digested in whatever order the engine chose.
 // Where is an optional SQL condition with Args as its parameters. Schema names
 // an attached database; empty is the main one.
+//
+// The stream holds the values of Columns only; Key's values decide the order
+// and are not encoded unless they are among Columns. A digest that is signed
+// or sealed binds a row's key only when the key is one of its columns, so
+// every Key column must also be in Columns, or the set is refused with
+// ErrKeyNotCovered. UnsignedKey is the caller's statement that the key's
+// values are not part of what the digest binds (a key that is only a
+// position, renumbered freely): with it set, a Key column outside Columns is
+// digested as before.
 type RowSet struct {
-	Kind    Kind
-	Set     string
-	Schema  string
-	Table   string
-	Columns []string
-	Key     []string
-	Where   string
-	Args    []any
+	Kind        Kind
+	Set         string
+	Schema      string
+	Table       string
+	Columns     []string
+	Key         []string
+	Where       string
+	Args        []any
+	UnsignedKey bool
 }
 
 // Digest is a row set's SHA-256 and BLAKE3 over its canonical stream, and the
@@ -187,6 +197,17 @@ func (s RowSet) valid() error {
 	for _, name := range append(append([]string(nil), s.Columns...), s.Key...) {
 		if !validName(name) {
 			return bad("column name is empty or not UTF-8")
+		}
+	}
+	if !s.UnsignedKey {
+		covered := map[string]bool{}
+		for _, name := range s.Columns {
+			covered[name] = true
+		}
+		for _, name := range s.Key {
+			if !covered[name] {
+				return fmt.Errorf("%w: key column %q", ErrKeyNotCovered, name)
+			}
 		}
 	}
 	return nil

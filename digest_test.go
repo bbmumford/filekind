@@ -61,7 +61,7 @@ func TestEncodeRowsWritesTheSpecExample(t *testing.T) {
 // order the engine stores them fails here.
 func TestDigestFollowsTheKeyNotTheStorageOrder(t *testing.T) {
 	ctx := context.Background()
-	set := RowSet{Kind: Fixture, Set: "s", Table: "t", Columns: []string{"v"}, Key: []string{"k"}}
+	set := RowSet{Kind: Fixture, Set: "s", Table: "t", Columns: []string{"v"}, Key: []string{"k"}, UnsignedKey: true}
 	inOrder, _ := newFile(t)
 	exec(t, inOrder, "CREATE TABLE t (k TEXT PRIMARY KEY, v TEXT)",
 		"INSERT INTO t VALUES ('a', '1')", "INSERT INTO t VALUES ('b', '2')", "INSERT INTO t VALUES ('c', '3')")
@@ -141,7 +141,7 @@ func TestDigestTakesTheStorageClassFromTheEngine(t *testing.T) {
 	exec(t, db, "CREATE TABLE t (k INTEGER PRIMARY KEY, d DATETIME, r REAL, n)",
 		"INSERT INTO t VALUES (1, '2026-11-21 10:00:00', -0.0, -0.0)")
 	var buf bytes.Buffer
-	set := RowSet{Kind: Fixture, Set: "s", Table: "t", Columns: []string{"d", "r", "n"}, Key: []string{"k"}}
+	set := RowSet{Kind: Fixture, Set: "s", Table: "t", Columns: []string{"d", "r", "n"}, Key: []string{"k"}, UnsignedKey: true}
 	if _, err := EncodeRows(context.Background(), db, set, &buf); err != nil {
 		t.Fatal(err)
 	}
@@ -210,13 +210,13 @@ func TestDigestRefusesKeysThatTie(t *testing.T) {
 		"CREATE TABLE n (k, v TEXT)", "INSERT INTO n VALUES (NULL, 'a')", "INSERT INTO n VALUES (NULL, 'b')",
 		"CREATE TABLE u (k, v TEXT)", "INSERT INTO u VALUES ('p', 'one')", "INSERT INTO u VALUES ('P', 'two')")
 	for _, table := range []string{"d", "m", "n"} {
-		set := RowSet{Kind: Fixture, Set: table, Table: table, Columns: []string{"v"}, Key: []string{"k"}}
+		set := RowSet{Kind: Fixture, Set: table, Table: table, Columns: []string{"v"}, Key: []string{"k"}, UnsignedKey: true}
 		if _, err := DigestRows(ctx, db, set); !errors.Is(err, ErrKeyNotUnique) {
 			t.Errorf("table %s: %v, want ErrKeyNotUnique", table, err)
 		}
 	}
 	// 'p' and 'P' are distinct keys under BINARY collation.
-	set := RowSet{Kind: Fixture, Set: "u", Table: "u", Columns: []string{"v"}, Key: []string{"k"}}
+	set := RowSet{Kind: Fixture, Set: "u", Table: "u", Columns: []string{"v"}, Key: []string{"k"}, UnsignedKey: true}
 	if _, err := DigestRows(ctx, db, set); err != nil {
 		t.Errorf("table u: %v", err)
 	}
@@ -228,7 +228,7 @@ func TestDigestRefusesWhatIsNotABaseTable(t *testing.T) {
 	exampleTable(t, db, false)
 	exec(t, db, "CREATE VIEW v AS SELECT * FROM example")
 	for _, table := range []string{"v", "missing", "sqlite_schema"} {
-		set := RowSet{Kind: Fixture, Set: "s", Table: table, Columns: []string{"v"}, Key: []string{"k"}}
+		set := RowSet{Kind: Fixture, Set: "s", Table: table, Columns: []string{"v"}, Key: []string{"k"}, UnsignedKey: true}
 		if _, err := DigestRows(ctx, db, set); !errors.Is(err, ErrNotBaseTable) {
 			t.Errorf("table %s: %v, want ErrNotBaseTable", table, err)
 		}

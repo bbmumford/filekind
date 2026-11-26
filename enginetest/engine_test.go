@@ -46,6 +46,9 @@ type vectors struct {
 			Key     []string `json:"key"`
 			Where   string   `json:"where"`
 			Args    []int64  `json:"args"`
+			// UnsignedKey is the set's statement that its key is outside
+			// what the digest binds.
+			UnsignedKey bool `json:"unsignedKey"`
 		} `json:"rowSet"`
 		StreamHex string `json:"streamHex"`
 		SHA256    string `json:"sha256"`
@@ -67,7 +70,8 @@ var outcomes = map[string]error{
 	"OlderGeneration": filekind.ErrOlderGeneration, "InvalidArgument": filekind.ErrInvalidArgument,
 	"NotBaseTable": filekind.ErrNotBaseTable, "KeyNotUnique": filekind.ErrKeyNotUnique,
 	"ValueType": filekind.ErrValueType, "InvalidText": filekind.ErrInvalidText,
-	"BinaryNumber": filekind.ErrBinaryNumber,
+	"KeyNotCovered": filekind.ErrKeyNotCovered,
+	"BinaryNumber":  filekind.ErrBinaryNumber,
 }
 
 func outcome(err error) string {
@@ -158,7 +162,7 @@ func TestTursoDigests(t *testing.T) {
 			args[j] = a
 		}
 		set := filekind.RowSet{Kind: kind(t, v.RowSet.Kind), Set: v.RowSet.Set, Table: v.RowSet.Table,
-			Columns: v.RowSet.Columns, Key: v.RowSet.Key, Where: v.RowSet.Where, Args: args}
+			Columns: v.RowSet.Columns, Key: v.RowSet.Key, Where: v.RowSet.Where, Args: args, UnsignedKey: v.RowSet.UnsignedKey}
 		label := fmt.Sprintf("digest %d (%s %s)", i, v.File, v.RowSet.Set)
 		var buf bytes.Buffer
 		_, encErr := filekind.EncodeRows(ctx, db, set, &buf)

@@ -191,6 +191,14 @@ DATETIME column into a time value; Python's `sqlite3` reads TEXT as bytes for
 the digest). The key values are read only to check order; they are not
 encoded unless they are also among the columns.
 
+Every key column must therefore also be a column, or the row set is refused
+(KeyNotCovered): a digest that is signed or sealed binds a row's key only
+through the columns, so rows whose keys are renumbered with their order kept
+would otherwise digest the same. A row set may state that its key's values are
+not part of what the digest binds (`UnsignedKey` in Go, `unsigned_key` in
+Python; `"unsignedKey": true` in the vectors), and only then may a key column
+be outside the columns.
+
 Two consecutive rows whose keys **tie** are refused (KeyNotUnique), because
 rows that tie have no order an engine is bound to. Key values tie when both
 are NULL, when both are numbers equal as numbers (INTEGER 1 ties REAL 1.0),
@@ -345,6 +353,7 @@ fixed vectors: their tests compute every expected value by calling the codec.
 | NotPlainFile | `ErrNotPlainFile` | `filekind.NotPlainFile` |
 | InvalidArgument | `ErrInvalidArgument` | `filekind.InvalidArgument` |
 | NotBaseTable | `ErrNotBaseTable` | `filekind.NotBaseTable` |
+| KeyNotCovered | `ErrKeyNotCovered` | `filekind.KeyNotCovered` |
 | KeyNotUnique | `ErrKeyNotUnique` | `filekind.KeyNotUnique` |
 | ValueType | `ErrValueType` | `filekind.ValueType` |
 | InvalidText | `ErrInvalidText` | `filekind.InvalidText` |

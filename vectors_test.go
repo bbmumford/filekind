@@ -39,6 +39,9 @@ type vectorFile struct {
 			Key     []string `json:"key"`
 			Where   string   `json:"where"`
 			Args    []any    `json:"args"`
+			// UnsignedKey is the set's statement that its key is outside
+			// what the digest binds.
+			UnsignedKey bool `json:"unsignedKey"`
 		} `json:"rowSet"`
 		StreamHex string `json:"streamHex"`
 		SHA256    string `json:"sha256"`
@@ -121,7 +124,7 @@ func TestGoldenDigests(t *testing.T) {
 			}
 		}
 		set := RowSet{Kind: kindNamed(t, v.RowSet.Kind), Set: v.RowSet.Set, Table: v.RowSet.Table,
-			Columns: v.RowSet.Columns, Key: v.RowSet.Key, Where: v.RowSet.Where, Args: args}
+			Columns: v.RowSet.Columns, Key: v.RowSet.Key, Where: v.RowSet.Where, Args: args, UnsignedKey: v.RowSet.UnsignedKey}
 		label := fmt.Sprintf("digest %d (%s %s)", i, v.File, v.RowSet.Set)
 		var buf bytes.Buffer
 		_, encErr := EncodeRows(ctx, db, set, &buf)

@@ -221,7 +221,7 @@ def main():
             "checks": [{"kind": k, "newest": n, "oldest": o, "outcome": out} for k, n, o, out in checks.get(file, [])],
         })
 
-    items = {"kind": "fixture", "set": "items", "table": "items", "columns": ITEM_COLS, "key": ["k"]}
+    items = {"kind": "fixture", "set": "items", "table": "items", "columns": ITEM_COLS, "key": ["k"], "unsignedKey": True}
     pairs = {"kind": "fixture", "set": "pairs", "table": "pairs", "columns": ["a", "b", "v"], "key": ["a", "b"]}
     example = {"kind": "fixture", "set": "example", "table": "example", "columns": ["k", "v"], "key": ["k"]}
     pair_rows = [[("text", a), ("integer", b), cls_and(v)] for a, b, v in sorted(PAIRS, key=lambda r: (r[0].encode(), r[1]))]
@@ -235,15 +235,16 @@ def main():
     # The same rows, another domain: another set label, another kind.
     vectors["digests"].append(digest_case("rows.db", dict(example, set="example2"), example_rows))
     for rowset, outcome in (
-        ({"kind": "fixture", "set": "dupes", "table": "dupes", "columns": ["v"], "key": ["tag"]}, "KeyNotUnique"),
-        ({"kind": "fixture", "set": "mixed", "table": "mixed", "columns": ["v"], "key": ["k"]}, "KeyNotUnique"),
-        ({"kind": "fixture", "set": "nullkeys", "table": "nullkeys", "columns": ["v"], "key": ["k"]}, "KeyNotUnique"),
-        ({"kind": "fixture", "set": "view", "table": "itemsView", "columns": ["i"], "key": ["k"]}, "NotBaseTable"),
-        ({"kind": "fixture", "set": "none", "table": "nope", "columns": ["i"], "key": ["k"]}, "NotBaseTable"),
+        ({"kind": "fixture", "set": "dupes", "table": "dupes", "columns": ["v"], "key": ["tag"], "unsignedKey": True}, "KeyNotUnique"),
+        ({"kind": "fixture", "set": "mixed", "table": "mixed", "columns": ["v"], "key": ["k"], "unsignedKey": True}, "KeyNotUnique"),
+        ({"kind": "fixture", "set": "nullkeys", "table": "nullkeys", "columns": ["v"], "key": ["k"], "unsignedKey": True}, "KeyNotUnique"),
+        ({"kind": "fixture", "set": "view", "table": "itemsView", "columns": ["i"], "key": ["k"], "unsignedKey": True}, "NotBaseTable"),
+        ({"kind": "fixture", "set": "none", "table": "nope", "columns": ["i"], "key": ["k"], "unsignedKey": True}, "NotBaseTable"),
         ({"kind": "fixture", "set": "engine", "table": "sqlite_schema", "columns": ["name"], "key": ["name"]}, "NotBaseTable"),
-        ({"kind": "fixture", "set": "badtext", "table": "badtext", "columns": ["t"], "key": ["k"]}, "InvalidText"),
-        ({"kind": "fixture", "set": "", "table": "items", "columns": ["i"], "key": ["k"]}, "InvalidArgument"),
+        ({"kind": "fixture", "set": "badtext", "table": "badtext", "columns": ["t"], "key": ["k"], "unsignedKey": True}, "InvalidText"),
+        ({"kind": "fixture", "set": "", "table": "items", "columns": ["i"], "key": ["k"], "unsignedKey": True}, "InvalidArgument"),
         ({"kind": "fixture", "set": "nokey", "table": "items", "columns": ["i"], "key": []}, "InvalidArgument"),
+        ({"kind": "fixture", "set": "itemsKeyUnsigned", "table": "items", "columns": ITEM_COLS, "key": ["k"]}, "KeyNotCovered"),
     ):
         vectors["digests"].append({"file": "rows.db", "rowSet": rowset, "outcome": outcome})
 

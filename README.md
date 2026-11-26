@@ -45,6 +45,12 @@ d, err := filekind.DigestRows(ctx, db, filekind.RowSet{
 fmt.Println(d.SHA256Hex(), d.BLAKE3Hex(), d.Rows)
 ```
 
+The digest holds the values of `Columns` only, so every `Key` column must also
+be one of the `Columns`: a row set whose key is outside them is refused with
+`ErrKeyNotCovered`, because a signed digest would not bind the rows' keys. A
+set ordered by a key whose values are not part of what it signs says so with
+`UnsignedKey: true`.
+
 `Verify` checks a file from elsewhere (quick_check, then the header) once the
 caller has opened it read-only; `Create` makes a new file of a kind on a
 `*sql.Conn`; `CheckValues` enforces a

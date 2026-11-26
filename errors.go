@@ -51,6 +51,11 @@ var (
 	ErrInvalidArgument = errors.New("filekind: invalid argument")
 	// ErrNotBaseTable: a row set names a view, a virtual table or nothing.
 	ErrNotBaseTable = errors.New("filekind: row set does not name a base table")
+	// ErrKeyNotCovered: a row set's Key names a column outside Columns and the
+	// set does not say so with UnsignedKey. The key's values decide the order
+	// but are not in the stream, so a digest over such a set does not bind
+	// them: rows whose keys are renumbered, order kept, digest the same.
+	ErrKeyNotCovered = errors.New("filekind: row set key is outside its columns")
 	// ErrKeyNotUnique: two rows of a row set share a key, so their order is
 	// not fixed by the key.
 	ErrKeyNotUnique = errors.New("filekind: row set key is not unique")

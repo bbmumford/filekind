@@ -39,7 +39,8 @@ class GoldenVectors(unittest.TestCase):
         for i, case in enumerate(self.v["digests"]):
             rs = case["rowSet"]
             rowset = filekind.RowSet(kind=rs["kind"], set=rs["set"], table=rs["table"], columns=tuple(rs["columns"]),
-                                     key=tuple(rs["key"]), where=rs.get("where", ""), args=tuple(rs.get("args", ())))
+                                     key=tuple(rs["key"]), where=rs.get("where", ""), args=tuple(rs.get("args", ())),
+                                     unsigned_key=rs.get("unsignedKey", False))
             conn = connect(self.tmp.fixture(case["file"]))
             label = f'digest {i} ({case["file"]} {rs["set"]})'
             if "outcome" in case:

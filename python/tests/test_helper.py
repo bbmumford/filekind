@@ -329,7 +329,7 @@ class Digest(unittest.TestCase):
         self.assertEqual(d.sha256_hex, d.sha256_hex.lower())
 
     def test_follows_the_key_not_the_storage_order(self):
-        rs = filekind.RowSet(kind="fixture", set="s", table="t", columns=("v",), key=("k",))
+        rs = filekind.RowSet(kind="fixture", set="s", table="t", columns=("v",), key=("k",), unsigned_key=True)
         digests = []
         for name, rows in (("in.db", "abc"), ("against.db", "cab")):
             conn = connect(self.tmp.file(name))
@@ -368,7 +368,7 @@ class Digest(unittest.TestCase):
         conn = connect(self.tmp.file("c.db"))
         conn.execute("CREATE TABLE t (k INTEGER PRIMARY KEY, d DATETIME, r REAL, n)")
         conn.execute("INSERT INTO t VALUES (1, '2026-11-21 10:00:00', -0.0, -0.0)")
-        rs = filekind.RowSet(kind="fixture", set="s", table="t", columns=("d", "r", "n"), key=("k",))
+        rs = filekind.RowSet(kind="fixture", set="s", table="t", columns=("d", "r", "n"), key=("k",), unsigned_key=True)
         s = filekind.encode_rows(conn, rs)
         self.assertIn(b"\x03\x00\x00\x00\x13" + b"2026-11-21 10:00:00", s)
         self.assertNotIn(b"\x02\x80" + bytes(7), s)
@@ -394,8 +394,8 @@ class Digest(unittest.TestCase):
             conn.executemany(f"INSERT INTO {table} VALUES (?, ?)", rows)
         for table in ("d", "m", "n"):
             with self.assertRaises(filekind.KeyNotUnique, msg=table):
-                filekind.digest_rows(conn, filekind.RowSet(kind="fixture", set=table, table=table, columns=("v",), key=("k",)))
-        filekind.digest_rows(conn, filekind.RowSet(kind="fixture", set="u", table="u", columns=("v",), key=("k",)))
+                filekind.digest_rows(conn, filekind.RowSet(kind="fixture", set=table, table=table, columns=("v",), key=("k",), unsigned_key=True))
+        filekind.digest_rows(conn, filekind.RowSet(kind="fixture", set="u", table="u", columns=("v",), key=("k",), unsigned_key=True))
 
     def test_refuses_what_is_not_a_base_table(self):
         conn = connect(self.tmp.file("b.db"))
@@ -403,20 +403,20 @@ class Digest(unittest.TestCase):
         conn.execute("CREATE VIEW v AS SELECT * FROM example")
         for table in ("v", "missing", "sqlite_schema"):
             with self.assertRaises(filekind.NotBaseTable, msg=table):
-                filekind.digest_rows(conn, filekind.RowSet(kind="fixture", set="s", table=table, columns=("v",), key=("k",)))
+                filekind.digest_rows(conn, filekind.RowSet(kind="fixture", set="s", table=table, columns=("v",), key=("k",), unsigned_key=True))
         filekind.digest_rows(conn, filekind.RowSet(kind="fixture", set="example", table="EXAMPLE", columns=("k", "v"), key=("k",)))
 
     def test_refuses_a_malformed_set(self):
         conn = connect(self.tmp.file("m.db"))
         example_table(conn)
         for rs in (
-            filekind.RowSet(kind=0xEE, set="s", table="example", columns=("v",), key=("k",)),
-            filekind.RowSet(kind="fixture", set="", table="example", columns=("v",), key=("k",)),
-            filekind.RowSet(kind="fixture", set="s", table="", columns=("v",), key=("k",)),
-            filekind.RowSet(kind="fixture", set="s", table="example", columns=(), key=("k",)),
+            filekind.RowSet(kind=0xEE, set="s", table="example", columns=("v",), key=("k",), unsigned_key=True),
+            filekind.RowSet(kind="fixture", set="", table="example", columns=("v",), key=("k",), unsigned_key=True),
+            filekind.RowSet(kind="fixture", set="s", table="", columns=("v",), key=("k",), unsigned_key=True),
+            filekind.RowSet(kind="fixture", set="s", table="example", columns=(), key=("k",), unsigned_key=True),
             filekind.RowSet(kind="fixture", set="s", table="example", columns=("v",), key=()),
-            filekind.RowSet(kind="fixture", set="s", table="example", columns=("v\x00",), key=("k",)),
-            filekind.RowSet(kind="fixture", set="\udcff", table="example", columns=("v",), key=("k",)),
+            filekind.RowSet(kind="fixture", set="s", table="example", columns=("v\x00",), key=("k",), unsigned_key=True),
+            filekind.RowSet(kind="fixture", set="\udcff", table="example", columns=("v",), key=("k",), unsigned_key=True),
             filekind.RowSet(kind="fixture", set="s", table="example", columns="v", key=("k",)),
         ):
             with self.assertRaises(filekind.InvalidArgument, msg=rs):

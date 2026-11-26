@@ -7,7 +7,7 @@ called; the multi-writer writer lives in filekind.writer."""
 
 from ._errors import (
     BinaryNumber, CheckpointBusy, FileKindError, ForeignFile, GenerationBackwards, HeaderRefusal,
-    InvalidArgument, InvalidJSON, InvalidText, KeyNotUnique, NewerGeneration, NoGeneration, NotBaseTable,
+    InvalidArgument, InvalidJSON, InvalidText, KeyNotCovered, KeyNotUnique, NewerGeneration, NoGeneration, NotBaseTable,
     NotIntact, NotPlainFile, NotWAL, OlderGeneration, OUTCOMES, StampNotHeld, UnknownKind, Unstamped,
     UnreadableHeader, ValueType, WrongKind,
 )
@@ -22,7 +22,7 @@ from ._values import check_values
 __all__ = [
     "BinaryNumber", "CheckpointBusy", "Digest", "Entry", "FileKindError", "ForeignFile",
     "GenerationBackwards", "Header", "HeaderRefusal", "InvalidArgument", "InvalidJSON", "InvalidText",
-    "KeyNotUnique", "NewerGeneration", "NoGeneration", "NotBaseTable", "NotIntact", "NotPlainFile", "NotWAL",
+    "KeyNotCovered", "KeyNotUnique", "NewerGeneration", "NoGeneration", "NotBaseTable", "NotIntact", "NotPlainFile", "NotWAL",
     "OUTCOMES", "OlderGeneration", "PREFIX", "RowSet", "StampNotHeld", "UnknownKind", "Unstamped",
     "UnreadableHeader", "ValueType", "Want", "WrongKind", "application_id", "canonical_json",
     "canonical_json_text", "check", "check_values", "checkpoint", "create", "digest_rows", "encode_rows",

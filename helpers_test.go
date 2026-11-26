@@ -85,7 +85,7 @@ var outcomes = map[string]error{
 	"OlderGeneration": ErrOlderGeneration, "GenerationBackwards": ErrGenerationBackwards,
 	"StampNotHeld": ErrStampNotHeld, "CheckpointBusy": ErrCheckpointBusy,
 	"UnreadableHeader": ErrUnreadableHeader, "NotPlainFile": ErrNotPlainFile,
-	"InvalidArgument": ErrInvalidArgument, "NotBaseTable": ErrNotBaseTable, "KeyNotUnique": ErrKeyNotUnique,
+	"InvalidArgument": ErrInvalidArgument, "NotBaseTable": ErrNotBaseTable, "KeyNotCovered": ErrKeyNotCovered, "KeyNotUnique": ErrKeyNotUnique,
 	"ValueType": ErrValueType, "InvalidText": ErrInvalidText, "BinaryNumber": ErrBinaryNumber,
 	"InvalidJSON": ErrInvalidJSON,
 }

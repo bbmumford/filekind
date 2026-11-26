@@ -17,7 +17,8 @@
     ],
     "kind": "fixture",
     "set": "items",
-    "table": "items"
+    "table": "items",
+    "unsignedKey": true
    },
    "rows": 5,
    "sha256": "d2651f2feea3761ee4cdaee77a8c4b5c4db16eecf7b7404924fc13a95f34fbf5",
@@ -84,6 +85,7 @@
     "kind": "fixture",
     "set": "itemsFrom0",
     "table": "items",
+    "unsignedKey": true,
     "where": "i >= ?"
    },
    "rows": 3,
@@ -107,7 +109,8 @@
     ],
     "kind": "fixture",
     "set": "items",
-    "table": "items"
+    "table": "items",
+    "unsignedKey": true
    },
    "rows": 5,
    "sha256": "d2651f2feea3761ee4cdaee77a8c4b5c4db16eecf7b7404924fc13a95f34fbf5",
@@ -174,6 +177,7 @@
     "kind": "fixture",
     "set": "itemsFrom0",
     "table": "items",
+    "unsignedKey": true,
     "where": "i >= ?"
    },
    "rows": 3,
@@ -211,7 +215,8 @@
     ],
     "kind": "fixture",
     "set": "dupes",
-    "table": "dupes"
+    "table": "dupes",
+    "unsignedKey": true
    }
   },
   {
@@ -226,7 +231,8 @@
     ],
     "kind": "fixture",
     "set": "mixed",
-    "table": "mixed"
+    "table": "mixed",
+    "unsignedKey": true
    }
   },
   {
@@ -241,7 +247,8 @@
     ],
     "kind": "fixture",
     "set": "nullkeys",
-    "table": "nullkeys"
+    "table": "nullkeys",
+    "unsignedKey": true
    }
   },
   {
@@ -256,7 +263,8 @@
     ],
     "kind": "fixture",
     "set": "view",
-    "table": "itemsView"
+    "table": "itemsView",
+    "unsignedKey": true
    }
   },
   {
@@ -271,7 +279,8 @@
     ],
     "kind": "fixture",
     "set": "none",
-    "table": "nope"
+    "table": "nope",
+    "unsignedKey": true
    }
   },
   {
@@ -301,7 +310,8 @@
     ],
     "kind": "fixture",
     "set": "badtext",
-    "table": "badtext"
+    "table": "badtext",
+    "unsignedKey": true
    }
   },
   {
@@ -316,7 +326,8 @@
     ],
     "kind": "fixture",
     "set": "",
-    "table": "items"
+    "table": "items",
+    "unsignedKey": true
    }
   },
   {
@@ -329,6 +340,26 @@
     "key": [],
     "kind": "fixture",
     "set": "nokey",
+    "table": "items"
+   }
+  },
+  {
+   "file": "rows.db",
+   "outcome": "KeyNotCovered",
+   "rowSet": {
+    "columns": [
+     "i",
+     "r",
+     "t",
+     "b",
+     "n",
+     "d"
+    ],
+    "key": [
+     "k"
+    ],
+    "kind": "fixture",
+    "set": "itemsKeyUnsigned",
     "table": "items"
    }
   }
