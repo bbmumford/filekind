@@ -9,7 +9,7 @@ from ._errors import (
     BinaryNumber, CheckpointBusy, FileKindError, ForeignFile, GenerationBackwards, HeaderRefusal,
     InvalidArgument, InvalidJSON, InvalidText, KeyNotCovered, KeyNotUnique, NewerGeneration, NoGeneration, NotBaseTable,
     NotIntact, NotPlainFile, NotWAL, OlderGeneration, OUTCOMES, StampNotHeld, UnknownKind, Unstamped,
-    UnreadableHeader, ValueType, WrongKind,
+    UnreadableHeader, UnsafeOpen, ValueType, WrongKind,
 )
 from ._digest import Digest, RowSet, digest_rows, encode_rows, query
 from ._header import (
@@ -24,7 +24,7 @@ __all__ = [
     "GenerationBackwards", "Header", "HeaderRefusal", "InvalidArgument", "InvalidJSON", "InvalidText",
     "KeyNotCovered", "KeyNotUnique", "NewerGeneration", "NoGeneration", "NotBaseTable", "NotIntact", "NotPlainFile", "NotWAL",
     "OUTCOMES", "OlderGeneration", "PREFIX", "RowSet", "StampNotHeld", "UnknownKind", "Unstamped",
-    "UnreadableHeader", "ValueType", "Want", "WrongKind", "application_id", "canonical_json",
+    "UnreadableHeader", "UnsafeOpen", "ValueType", "Want", "WrongKind", "application_id", "canonical_json",
     "canonical_json_text", "check", "check_values", "checkpoint", "create", "digest_rows", "encode_rows",
     "expect", "kind_byte", "kind_of", "lookup", "query", "read_file_header", "read_header", "registry",
     "set_header", "stamp", "verify",

@@ -51,8 +51,9 @@ be one of the `Columns`: a row set whose key is outside them is refused with
 set ordered by a key whose values are not part of what it signs says so with
 `UnsignedKey: true`.
 
-`Verify` checks a file from elsewhere (quick_check, then the header) once the
-caller has opened it read-only; `Create` makes a new file of a kind on a
+`Verify` checks a file from elsewhere (its connection's `query_only` and
+`trusted_schema`, then quick_check, then the header) once the caller has opened
+it read-only; `Create` makes a new file of a kind on a
 `*sql.Conn`; `CheckValues` enforces a
 `base3` kind's value rule; `CanonicalJSON` rewrites a JSON document in the
 canonical form; `ReadFileHeader` reads the two fields from a plaintext file

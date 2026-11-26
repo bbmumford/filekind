@@ -12,7 +12,7 @@ import unittest
 import filekind
 from filekind._registry import parse
 
-from _support import TempDir, connect, outcome
+from _support import TempDir, connect, connect_for_verify, outcome
 
 FIXTURE = filekind.application_id("fixture")
 RUN_LEDGER = filekind.application_id("runLedger")
@@ -265,7 +265,7 @@ class Verify(unittest.TestCase):
             f.seek(2 * 1024)
             f.write(b"\xff" * 1024)
         self.assertEqual(filekind.read_file_header(path), filekind.Header(FIXTURE, 1))
-        conn = connect(path)
+        conn = connect_for_verify(path)
         filekind.check(conn, filekind.Want("fixture", 1))
         with self.assertRaises((filekind.NotIntact, sqlite3.DatabaseError)):
             filekind.verify(conn, filekind.Want("fixture", 1))
@@ -289,11 +289,24 @@ class Verify(unittest.TestCase):
         filekind.stamp(conn, "fixture", 1)
         conn.close()
         with self.assertRaises(filekind.NotIntact):
-            filekind.verify(connect(path), filekind.Want("fixture", 1))
+            filekind.verify(connect_for_verify(path), filekind.Want("fixture", 1))
+
+    def test_refuses_a_connection_that_can_write_or_trusts_the_schema(self):
+        """verify reads query_only and trusted_schema first and refuses a
+        connection reporting either unsafe, before the file is read."""
+        tmp = TempDir()
+        path = tmp.fixture("rows.db")
+        for pragmas in (("PRAGMA trusted_schema = 0",), ("PRAGMA query_only = 1", "PRAGMA trusted_schema = 1")):
+            conn = connect(path)
+            for p in pragmas:
+                conn.execute(p)
+            with self.assertRaises(filekind.UnsafeOpen):
+                filekind.verify(conn, filekind.Want("fixture", 1))
+            conn.close()
 
     def test_passes_an_intact_file_and_judges_its_header(self):
         tmp = TempDir()
-        conn = connect(tmp.fixture("rows.db"))
+        conn = connect_for_verify(tmp.fixture("rows.db"))
         self.assertEqual(filekind.verify(conn, filekind.Want("fixture", 1)).user_version, 1)
         with self.assertRaises(filekind.WrongKind):
             filekind.verify(conn, filekind.Want("runLedger", 2))

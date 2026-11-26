@@ -36,6 +36,15 @@ def connect(path, **kw):
     return sqlite3.connect(path, isolation_level=None, **kw)
 
 
+def connect_for_verify(path):
+    """A connection with query_only on and trusted_schema off, the settings
+    verify requires of a file from elsewhere."""
+    conn = connect(path)
+    conn.execute("PRAGMA query_only = 1")
+    conn.execute("PRAGMA trusted_schema = 0")
+    return conn
+
+
 def outcome(fn):
     """The outcome word for calling fn: 'ok' or the refusal's class name."""
     import filekind

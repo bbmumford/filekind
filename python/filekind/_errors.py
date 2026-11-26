@@ -79,6 +79,11 @@ class NotBaseTable(FileKindError):
     """A row set names a view, a virtual table, an engine table or nothing."""
 
 
+class UnsafeOpen(FileKindError):
+    """verify found the connection able to write the file (query_only off) or
+    to run the file's own schema code (trusted_schema on)."""
+
+
 class KeyNotCovered(FileKindError):
     """A row set's key names a column outside its columns and the set does not
     say so with unsigned_key."""
@@ -115,6 +120,6 @@ OUTCOMES = {
         Unstamped, ForeignFile, UnknownKind, WrongKind, NoGeneration, NewerGeneration,
         OlderGeneration, GenerationBackwards, StampNotHeld, CheckpointBusy, UnreadableHeader,
         NotPlainFile, NotIntact, InvalidArgument, NotBaseTable, KeyNotCovered, KeyNotUnique, ValueType, InvalidText,
-        BinaryNumber, InvalidJSON, NotWAL,
+        BinaryNumber, InvalidJSON, NotWAL, UnsafeOpen,
     )
 }

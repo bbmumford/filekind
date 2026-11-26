@@ -25,6 +25,13 @@ func openFile(t *testing.T, path string) *sql.DB {
 	return db
 }
 
+// openForVerify opens path read-only with query_only on and trusted_schema
+// off, the settings Verify requires of a file from elsewhere.
+func openForVerify(t *testing.T, path string) *sql.DB {
+	t.Helper()
+	return openFile(t, "file:"+path+"?mode=ro&_pragma=query_only(1)&_pragma=trusted_schema(0)")
+}
+
 // closeAtEnd closes c when the test ends and fails the test if closing fails.
 func closeAtEnd(t *testing.T, c io.Closer) {
 	t.Helper()

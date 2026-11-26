@@ -42,7 +42,7 @@ func TestVerifyRefusesADamagedFileWithAnIntactHeader(t *testing.T) {
 	if h, err := ReadFileHeader(path); err != nil || h != (Header{Fixture.ApplicationID(), 1}) {
 		t.Fatalf("the damaged file's header = %+v, %v", h, err)
 	}
-	db := openFile(t, path)
+	db := openForVerify(t, path)
 	if _, err := Check(context.Background(), db, Want{Kind: Fixture, Newest: 1}); err != nil {
 		t.Fatalf("Check alone passes the damaged file's header: %v", err)
 	}
@@ -53,7 +53,8 @@ func TestVerifyRefusesADamagedFileWithAnIntactHeader(t *testing.T) {
 
 func TestVerifyPassesAnIntactFileAndJudgesItsHeader(t *testing.T) {
 	ctx := context.Background()
-	db, _ := fixture(t, "rows.db")
+	_, path := fixture(t, "rows.db")
+	db := openForVerify(t, path)
 	if h, err := Verify(ctx, db, Want{Kind: Fixture, Newest: 1}); err != nil || h.UserVersion != 1 {
 		t.Fatalf("Verify of an intact fixture = %+v, %v", h, err)
 	}
@@ -80,7 +81,7 @@ func TestVerifyNamesWhatQuickCheckReports(t *testing.T) {
 	if err := db.Close(); err != nil {
 		t.Fatal(err)
 	}
-	reopened := openFile(t, path)
+	reopened := openForVerify(t, path)
 	if _, err := Verify(ctx, reopened, Want{Kind: Fixture, Newest: 1}); !errors.Is(err, ErrNotIntact) {
 		t.Fatalf("Verify of a file quick_check reports on = %v, want ErrNotIntact", err)
 	}
