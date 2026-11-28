@@ -15,7 +15,8 @@ var ErrNotIntact = errors.New("filekind: quick_check found the file damaged")
 // is read on those two settings; without them its triggers and the functions
 // its views and indexes name run with the reader's rights. Standard SQLite
 // reports both; the Turso engine reports query_only off and trusted_schema
-// with no row, so a file it writes is verified through standard SQLite.
+// with no row, so a file it writes is verified through standard SQLite
+// (package sqliteverify).
 var ErrUnsafeOpen = errors.New("filekind: the file is not opened query_only with trusted_schema off")
 
 // safeOpen is each setting Verify reads before it reads the file, and the
@@ -27,8 +28,8 @@ var safeOpen = []struct {
 
 // Verify checks a file from elsewhere that the caller has already opened
 // read-only through standard SQLite, its size bounded first and query_only on
-// and trusted_schema off set (SPEC.md, "Verifying a file from elsewhere"). It
-// reads both settings first and
+// and trusted_schema off set (SPEC.md, "Verifying a file from elsewhere";
+// package sqliteverify makes that open). It reads both settings first and
 // refuses with ErrUnsafeOpen, before any page of the file is read, a
 // connection that reports query_only off or trusted_schema on, or that answers
 // either setting with no row: an engine without the setting cannot be shown

@@ -28,7 +28,9 @@ go get github.com/bbmumford/filekind
 
 Package `filekind` imports only the standard library's `database/sql` and a
 BLAKE3 package, so it works over any `database/sql` SQLite driver: tursogo,
-go-libsql or modernc. It uses no cgo.
+go-libsql or modernc. It uses no cgo. Package
+`github.com/bbmumford/filekind/sqliteverify` opens a file for `Verify` through
+modernc SQLite, so only a program that imports it links an engine.
 
 ```go
 h, err := filekind.Check(ctx, db, filekind.Want{Kind: filekind.AuditSegment, Newest: 1})
@@ -53,7 +55,28 @@ set ordered by a key whose values are not part of what it signs says so with
 
 `Verify` checks a file from elsewhere (its connection's `query_only` and
 `trusted_schema`, then quick_check, then the header) once the caller has opened
-it read-only; `Create` makes a new file of a kind on a
+it read-only through standard SQLite. It refuses a connection that does not
+report both settings safe, so it refuses every connection made through the
+Turso engine, which cannot set `query_only`. A file that needs verifying, such
+as an audit segment or a sealed file, is opened for the check through package
+`sqliteverify` even when Turso writes it, once its writer has checkpointed and
+closed it; a pool the process opens through Turso for its own use is judged by
+`Check` alone.
+
+```go
+// The file's size is checked against the bound before it is opened read-only
+// through modernc SQLite with query_only on and trusted_schema off.
+h, err := sqliteverify.File(ctx, path, filekind.Want{Kind: filekind.AuditSegment, Newest: 1}, 64<<20)
+
+// Or keep the safe connection to digest the file after verifying it.
+db, err := sqliteverify.Open(path, 64<<20)
+defer db.Close()
+h, err = filekind.Verify(ctx, db, filekind.Want{Kind: filekind.AuditSegment, Newest: 1})
+d, err := filekind.DigestRows(ctx, db, rowSet)
+```
+
+`sqliteverify` refuses a path that is not a regular file (`ErrNotRegularFile`)
+and a file over its bound (`ErrTooLarge`) before opening it. `Create` makes a new file of a kind on a
 `*sql.Conn`; `CheckValues` enforces a
 `base3` kind's value rule; `CanonicalJSON` rewrites a JSON document in the
 canonical form; `ReadFileHeader` reads the two fields from a plaintext file
@@ -104,7 +127,7 @@ Releases are cut by release-please from conventional commit messages
 
 - No other package of this estate.
 - `github.com/zeebo/blake3`, for the BLAKE3 half of the digest.
-- Tests only: `modernc.org/sqlite`; `enginetest` requires
+- `modernc.org/sqlite`, for package `sqliteverify` and the tests; `enginetest` requires
   `turso.tech/database/tursogo` and replaces `github.com/bbmumford/filekind`
   with `../`.
 

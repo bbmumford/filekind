@@ -308,29 +308,38 @@ A record whose floats are written as exact base-3 pairs
 
 ## 9. Verifying a file from elsewhere
 
-A verifier of a file it did not write:
+A file trusted only after a check (a sealed or signed file, an audit segment,
+any file received from elsewhere) is verified through standard SQLite,
+whichever engine wrote it. A verifier:
 
 1. checks the file's size against its bound before opening it;
-2. opens it read-only where the engine has a read-only open, and sets
-   `PRAGMA query_only` and `PRAGMA trusted_schema = OFF` where the engine
-   supports them (the Turso engine, as measured, refuses `query_only = ON`,
-   reports `query_only` off and answers `trusted_schema` with no row, so the
-   helpers' Verify refuses a file opened through it and a file from elsewhere
-   is verified through an engine that has the setting);
+2. opens it read-only through standard SQLite and sets `PRAGMA query_only = ON`
+   and `PRAGMA trusted_schema = OFF`;
 3. runs `PRAGMA quick_check` and requires `ok`;
 4. checks the header (section 3);
 5. digests base tables only (section 6), and never reads a view.
 
+The Turso engine, as measured, refuses `query_only = ON`, reports `query_only`
+off and answers `trusted_schema` with no row, so it cannot hold step 2. A file
+it writes is plain SQLite on disk: once its writer has checkpointed and closed
+it, the verifier opens it read-only through standard SQLite for the check (an
+encrypted file is not readable there and is not verified this way). A pool or
+file a process opens through the Turso engine for its own reads and writes is
+judged by the header check alone (section 3), never by Verify.
+
 Steps 1 and 2 belong to the caller, whose engine and data-source name the open
-and the pragmas are. The helpers' Verify (Go) and verify (Python) read both
-settings of step 2 first and refuse, as UnsafeOpen and before any page of the
-file is read, a connection that reports `query_only` off or `trusted_schema`
-on or answers either with no row, since an engine without the setting cannot
-be shown to hold it. They then do steps 3 and 4: quick_check must answer the one row `ok`,
-or the file is refused as NotIntact (an engine that refuses to read a damaged page returns its own
-error instead), and then the header is checked. The digest does step 5. The Turso engine accepts `ATTACH`
-only when its data-source name carries `experimental=attach`, and runs
-triggers, `RAISE(ABORT)` included, without any flag.
+and the pragmas are; the Go helper's `sqliteverify` package does both through
+modernc SQLite, and Python's `sqlite3` is standard SQLite. The helpers' Verify
+(Go) and verify (Python) read both settings of step 2 first and refuse, as
+UnsafeOpen and before any page of the file is read, a connection that reports
+`query_only` off or `trusted_schema` on or answers either with no row, since
+an engine without the setting cannot be shown to hold it. They then do steps 3
+and 4: quick_check must answer the one row `ok`, or the file is refused as
+NotIntact (an engine that refuses to read a damaged page returns its own error
+instead), and then the header is checked. The digest does step 5. The Turso
+engine accepts `ATTACH` only when its data-source name carries
+`experimental=attach`, and runs triggers, `RAISE(ABORT)` included, without any
+flag.
 
 ## 10. Golden vectors
 

@@ -19,6 +19,7 @@ import (
 	"testing"
 
 	"github.com/bbmumford/filekind"
+	"github.com/bbmumford/filekind/sqliteverify"
 	_ "turso.tech/database/tursogo"
 )
 
@@ -250,9 +251,8 @@ func TestTursoStampAndCreate(t *testing.T) {
 
 // TestTursoVerify: the Turso engine reports query_only off and refuses to set
 // it on, so Verify refuses a file opened through it with ErrUnsafeOpen before
-// reading the file; a file from elsewhere is verified through an engine that
-// has the setting. Check, which a file this process wrote is judged by, reads
-// the header through tursogo.
+// reading the file. Check, which a pool this process opens through tursogo is
+// judged by, reads the header through it.
 func TestTursoVerify(t *testing.T) {
 	db := fixture(t, "rows.db")
 	if _, err := filekind.Verify(context.Background(), db, filekind.Want{Kind: filekind.Fixture, Newest: 1}); !errors.Is(err, filekind.ErrUnsafeOpen) {
@@ -260,5 +260,42 @@ func TestTursoVerify(t *testing.T) {
 	}
 	if h, err := filekind.Check(context.Background(), db, filekind.Want{Kind: filekind.Fixture, Newest: 1}); err != nil || h.UserVersion != 1 {
 		t.Fatalf("Check on tursogo = %+v, %v", h, err)
+	}
+}
+
+// TestTursoWrittenFileVerifiesThroughStandardSQLite: a file the Turso engine
+// writes is refused by Verify on the Turso connection, and once its writer has
+// checkpointed and closed it, the same file verifies through standard SQLite
+// (sqliteverify) with the header the writer stamped.
+func TestTursoWrittenFileVerifiesThroughStandardSQLite(t *testing.T) {
+	ctx := context.Background()
+	path := filepath.Join(t.TempDir(), "written.db")
+	db := open(t, path)
+	conn, err := db.Conn(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := filekind.Create(ctx, conn, filekind.Fixture, 1, []string{"CREATE TABLE t (k INTEGER PRIMARY KEY, v TEXT)"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := conn.ExecContext(ctx, "INSERT INTO t (v) VALUES ('a'), ('b')"); err != nil {
+		t.Fatal(err)
+	}
+	if err := filekind.Stamp(ctx, conn, filekind.Fixture, 2); err != nil {
+		t.Fatal(err)
+	}
+	want := filekind.Want{Kind: filekind.Fixture, Newest: 2}
+	if _, err := filekind.Verify(ctx, conn, want); !errors.Is(err, filekind.ErrUnsafeOpen) {
+		t.Fatalf("Verify on the Turso connection = %v, want ErrUnsafeOpen", err)
+	}
+	if err := conn.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	h, err := sqliteverify.File(ctx, path, want, 1<<20)
+	if err != nil || h != (filekind.Header{ApplicationID: filekind.Fixture.ApplicationID(), UserVersion: 2}) {
+		t.Fatalf("sqliteverify.File of the Turso-written file = %+v, %v", h, err)
 	}
 }
