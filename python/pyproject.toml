@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "filekind"
-version = "0.1.2" # x-release-please-version
+version = "0.2.0" # x-release-please-version
 description = "Identity header, kinds registry and canonical row digest for the single-file SQLite format, over the standard library's sqlite3."
 readme = "README.md"
 requires-python = ">=3.9"

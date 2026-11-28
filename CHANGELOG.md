@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.2.0](https://github.com/bbmumford/filekind/compare/v0.1.2...v0.2.0) (2026-11-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* Verify (Go) and verify (Python) answer ErrUnsafeOpen (UnsafeOpen) for a connection whose engine does not report query_only or trusted_schema; standard SQLite reports both, and the Turso engine answers trusted_schema with no row.
+* Verify and the Python verify answer ErrUnsafeOpen (UnsafeOpen) for a connection without both settings where its engine reports them; the Turso engine reports query_only off and cannot set it, so Verify refuses a file opened through it.
+* DigestRows and EncodeRows refuse a Key column outside Columns with ErrKeyNotCovered unless RowSet.UnsignedKey is set; the Python helper's RowSet takes unsigned_key and the vectors carry unsignedKey.
+
+### Features
+
+* a row set whose key is outside its columns is refused unless it says its key is unsigned, so a signed digest binds every row's key ([1042805](https://github.com/bbmumford/filekind/commit/1042805b21eeb4d422884fa58f12934e907645b7))
+* package sqliteverify opens a file for Verify read-only through modernc SQLite, with query_only on and trusted_schema off, after checking it is a regular file within a size bound ([02979a3](https://github.com/bbmumford/filekind/commit/02979a3535b843ce6138891ea94013b8bb4037e4))
+
+
+### Bug Fixes
+
+* a row set naming no schema reads the main database's table, never a TEMP table of the same name ([4e1a63c](https://github.com/bbmumford/filekind/commit/4e1a63c0d6a32c1beebff79d957fa2a11baf9fdb))
+* Verify refuses a connection that answers query_only or trusted_schema with no row, so only an engine that reports both settings safe passes ([ff178f9](https://github.com/bbmumford/filekind/commit/ff178f91b9baa90ea687c69913c5caf6523a6ede))
+* Verify refuses a connection that reports query_only off or trusted_schema on, before it reads the file ([305d3e6](https://github.com/bbmumford/filekind/commit/305d3e6128a1d3e31cef0d527e0edad1e84e9804))
+
 ## [0.1.2](https://github.com/bbmumford/filekind/compare/v0.1.1...v0.1.2) (2026-11-25)
 
 
