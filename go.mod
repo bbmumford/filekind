@@ -1,6 +1,6 @@
 module github.com/bbmumford/filekind
 
-go 1.25.0
+go 1.27.4
 
 require (
 	github.com/zeebo/blake3 v0.2.4
