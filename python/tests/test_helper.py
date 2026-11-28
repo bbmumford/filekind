@@ -304,6 +304,29 @@ class Verify(unittest.TestCase):
                 filekind.verify(conn, filekind.Want("fixture", 1))
             conn.close()
 
+    def test_refuses_a_connection_that_does_not_report_a_setting(self):
+        """verify refuses a connection that answers query_only or
+        trusted_schema with no row, as an engine without the setting does,
+        though every other setting is safe."""
+        tmp = TempDir()
+        path = tmp.fixture("rows.db")
+
+        class Unreported:
+            def __init__(self, conn, pragma):
+                self.conn, self.pragma = conn, pragma
+
+            def execute(self, sql, *args):
+                if sql == f"PRAGMA {self.pragma}":
+                    return self.conn.execute("SELECT 1 WHERE 0")
+                return self.conn.execute(sql, *args)
+
+        conn = connect_for_verify(path)
+        for pragma in ("query_only", "trusted_schema"):
+            with self.assertRaises(filekind.UnsafeOpen):
+                filekind.verify(Unreported(conn, pragma), filekind.Want("fixture", 1))
+        self.assertEqual(filekind.verify(Unreported(conn, "journal_mode"), filekind.Want("fixture", 1)).user_version, 1)
+        conn.close()
+
     def test_passes_an_intact_file_and_judges_its_header(self):
         tmp = TempDir()
         conn = connect_for_verify(tmp.fixture("rows.db"))

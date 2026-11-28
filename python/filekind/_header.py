@@ -213,18 +213,20 @@ def read_file_header(path) -> Header:
 
 
 def verify(conn, want: Want) -> Header:
-    """Check a file from elsewhere that the caller opened read-only, its size
-    bounded first and query_only and trusted_schema=OFF set where supported:
-    both settings are read first and a connection reporting query_only off or
-    trusted_schema on is refused (UnsafeOpen) before the file is read; a
-    setting the engine answers with no row is not judged. Then PRAGMA
-    quick_check must answer the one row "ok", then the header must satisfy
-    want. The refusal names how many rows quick_check returned, never
-    their text."""
+    """Check a file from elsewhere that the caller opened read-only through
+    standard SQLite (sqlite3), its size bounded first and query_only on and
+    trusted_schema off set: both settings are read first and a connection
+    reporting query_only off or trusted_schema on, or answering either with
+    no row, is refused (UnsafeOpen) before the file is read, since an engine
+    without the setting cannot be shown to hold it. Then PRAGMA quick_check
+    must answer the one row "ok", then the header must satisfy want. The
+    refusal names how many rows quick_check returned, never their text."""
     _valid(want)
     for pragma, wanted in (("query_only", 1), ("trusted_schema", 0)):
         rows = conn.execute(f"PRAGMA {pragma}").fetchall()
-        if rows and rows[0][0] != wanted:
+        if not rows:
+            raise E.UnsafeOpen(f"the engine reports no {pragma} setting")
+        if rows[0][0] != wanted:
             raise E.UnsafeOpen(f"{pragma} is {rows[0][0]}")
     answers = [row[0] for row in conn.execute("PRAGMA quick_check").fetchall()]
     if answers != ["ok"]:

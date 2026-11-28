@@ -80,8 +80,9 @@ class NotBaseTable(FileKindError):
 
 
 class UnsafeOpen(FileKindError):
-    """verify found the connection able to write the file (query_only off) or
-    to run the file's own schema code (trusted_schema on)."""
+    """verify found the connection able to write the file (query_only off),
+    able to run the file's own schema code (trusted_schema on), or not
+    reporting either setting."""
 
 
 class KeyNotCovered(FileKindError):

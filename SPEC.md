@@ -325,8 +325,8 @@ Steps 1 and 2 belong to the caller, whose engine and data-source name the open
 and the pragmas are. The helpers' Verify (Go) and verify (Python) read both
 settings of step 2 first and refuse, as UnsafeOpen and before any page of the
 file is read, a connection that reports `query_only` off or `trusted_schema`
-on; a setting the engine answers with no row is one it lacks and is not
-judged. They then do steps 3 and 4: quick_check must answer the one row `ok`,
+on or answers either with no row, since an engine without the setting cannot
+be shown to hold it. They then do steps 3 and 4: quick_check must answer the one row `ok`,
 or the file is refused as NotIntact (an engine that refuses to read a damaged page returns its own
 error instead), and then the header is checked. The digest does step 5. The Turso engine accepts `ATTACH`
 only when its data-source name carries `experimental=attach`, and runs
